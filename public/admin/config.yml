@@ -3,6 +3,7 @@ backend:
   repo: omiahi/melmiit
   branch: main
   base_url: https://decap-cms-github-oauth.vercel.app
+  auth_endpoint: auth
 
 media_folder: "public/uploads"
 public_folder: "/uploads"
