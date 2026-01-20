@@ -5,6 +5,10 @@ backend:
   base_url: https://decap-cms-github-oauth.vercel.app
   auth_endpoint: auth
 
+publish_mode: simple
+
+local_backend: false
+
 media_folder: "public/uploads"
 public_folder: "/uploads"
 
