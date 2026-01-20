@@ -6,7 +6,7 @@ import { FeaturedNews } from './components/FeaturedNews';
 import { LatestNews } from './components/LatestNews';
 import { Footer } from './components/Footer';
 import { ArticlePage } from './components/ArticlePage';
-import { Admin } from './pages/Admin';
+import Admin from './pages/Admin';
 import { Article } from './data/articles';
 import { fetchArticles } from './lib/api';
 

@@ -33,7 +33,13 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
-    target: "esnext"
+    target: "esnext",
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        admin: path.resolve(__dirname, 'admin/index.html'),
+      },
+    },
   },
   server: {
     port: 3000,

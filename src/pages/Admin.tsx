@@ -23,7 +23,7 @@ interface Article {
  * - Allows editing existing articles and creating new ones
  * - Saves changes via /api/save-articles serverless function
  */
-export function Admin() {
+export default function Admin() {
   const [password, setPassword] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
   const [articles, setArticles] = useState<Article[]>([]);
