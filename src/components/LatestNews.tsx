@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import type { Language } from '../App';
-import { articles } from '../data/articles';
+import { Article } from '../data/articles';
 
 interface LatestNewsProps {
   language: Language;
+  articles: Article[];
 }
 
 const translations = {
@@ -15,7 +16,7 @@ const translations = {
   },
 };
 
-export function LatestNews({ language }: LatestNewsProps) {
+export function LatestNews({ language, articles }: LatestNewsProps) {
   const t = translations[language];
   // Use articles 4, 5, and some repeats for latest section
   const latestArticles = articles.slice(4, 6).concat(articles.slice(1, 5));

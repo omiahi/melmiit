@@ -1,7 +1,9 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import type { Language } from '../App';
-import { articles } from '../data/articles';
+import { Article } from '../data/articles';
+import { fetchArticleById } from '../lib/api';
 
 interface ArticlePageProps {
   language: Language;
@@ -11,18 +13,38 @@ const translations = {
   en: {
     backToHome: 'BACK TO HOME',
     notFound: 'Article not found',
+    loading: 'LOADING ARTICLE...',
   },
   mn: {
     backToHome: 'НҮҮР ХУУДАС РУУ',
     notFound: 'Нийтлэл олдсонгүй',
+    loading: 'УНШИЖ БАЙНА...',
   },
 };
 
 export function ArticlePage({ language }: ArticlePageProps) {
   const { id } = useParams<{ id: string }>();
+  const [article, setArticle] = useState<Article | null>(null);
+  const [loading, setLoading] = useState(true);
   const t = translations[language];
   
-  const article = articles.find(a => a.id === id);
+  useEffect(() => {
+    if (id) {
+      setLoading(true);
+      fetchArticleById(id)
+        .then(setArticle)
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+        <p className="text-zinc-500 tracking-widest animate-pulse">{t.loading}</p>
+      </div>
+    );
+  }
 
   if (!article) {
     return (

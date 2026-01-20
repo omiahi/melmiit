@@ -1,1 +1,8 @@
 node_modules
+dist
+.idea
+.vscode
+*.log
+.vercel
+.env
+.DS_Store

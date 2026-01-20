@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Header } from './components/Header';
 import { HeroSection } from './components/HeroSection';
@@ -6,15 +6,37 @@ import { FeaturedNews } from './components/FeaturedNews';
 import { LatestNews } from './components/LatestNews';
 import { Footer } from './components/Footer';
 import { ArticlePage } from './components/ArticlePage';
+import { Article } from './data/articles';
+import { fetchArticles } from './lib/api';
 
 export type Language = 'en' | 'mn';
 
 function HomePage({ language }: { language: Language }) {
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchArticles()
+      .then(setArticles)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-zinc-500 tracking-widest animate-pulse">LOADING...</div>
+      </div>
+    );
+  }
+
+  if (articles.length === 0) return null;
+
   return (
     <>
-      <HeroSection language={language} />
-      <FeaturedNews language={language} />
-      <LatestNews language={language} />
+      <HeroSection language={language} articles={articles} />
+      <FeaturedNews language={language} articles={articles} />
+      <LatestNews language={language} articles={articles} />
     </>
   );
 }

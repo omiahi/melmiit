@@ -32,8 +32,8 @@ export default defineConfig({
     },
   },
   build: {
-    target: 'esnext',
-    outDir: 'dist', // ✅ or 'build' — pick ONE and match Vercel
+    outDir: "dist",
+    target: "esnext"
   },
   server: {
     port: 3000,

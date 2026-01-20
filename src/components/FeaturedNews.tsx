@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom';
 import type { Language } from '../App';
-import { articles } from '../data/articles';
+import { Article } from '../data/articles';
 
 interface FeaturedNewsProps {
   language: Language;
+  articles: Article[];
 }
 
-export function FeaturedNews({ language }: FeaturedNewsProps) {
+export function FeaturedNews({ language, articles }: FeaturedNewsProps) {
   // Use articles 1, 2, 3 for featured section
   const featuredArticles = articles.slice(1, 4);
 

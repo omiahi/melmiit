@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import type { Language } from '../App';
-import { articles } from '../data/articles';
+import { Article } from '../data/articles';
 
 interface HeroSectionProps {
   language: Language;
+  articles: Article[];
 }
 
 const translations = {
@@ -15,9 +16,11 @@ const translations = {
   },
 };
 
-export function HeroSection({ language }: HeroSectionProps) {
+export function HeroSection({ language, articles }: HeroSectionProps) {
   const t = translations[language];
   const heroArticle = articles[0]; // First article is the hero
+
+  if (!heroArticle) return null;
 
   const category = language === 'en' ? heroArticle.category : heroArticle.categoryMn;
   const title = language === 'en' ? heroArticle.title : heroArticle.titleMn;
