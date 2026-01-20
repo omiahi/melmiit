@@ -1,0 +1,24 @@
+backend:
+  name: github
+  repo: omiahi/melmiit
+  branch: main
+
+media_folder: "public/uploads"
+public_folder: "/uploads"
+
+collections:
+  - name: "articles"
+    label: "Articles"
+    folder: "content/articles"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "ID", name: "id", widget: "string" }
+      - { label: "Category (EN)", name: "category", widget: "string" }
+      - { label: "Category (MN)", name: "categoryMn", widget: "string" }
+      - { label: "Title (EN)", name: "title", widget: "string" }
+      - { label: "Title (MN)", name: "titleMn", widget: "string" }
+      - { label: "Date (EN)", name: "date", widget: "datetime" }
+      - { label: "Date (MN)", name: "dateMn", widget: "string" }
+      - { label: "Image", name: "image", widget: "image" }
+      - { label: "Body (EN)", name: "body", widget: "markdown" }
