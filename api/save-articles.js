@@ -41,7 +41,7 @@ export default async function handler(req, res) {
 
   try {
     // Step 1: Get current file SHA (required for updating)
-    const filePathInRepo = 'content/articles.json';
+    const filePathInRepo = 'public/articles.json';
     const getFileUrl = `https://api.github.com/repos/${githubRepo}/contents/${filePathInRepo}`;
 
     const getResponse = await fetch(getFileUrl, {

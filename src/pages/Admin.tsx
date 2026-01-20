@@ -34,7 +34,7 @@ export default function Admin() {
   // Load articles from JSON file
   useEffect(() => {
     if (authenticated) {
-      fetch('/content/articles.json')
+      fetch('/articles.json')
         .then(res => res.json())
         .then(setArticles)
         .catch(err => setMessage('Failed to load articles: ' + err.message));
