@@ -1,0 +1,14 @@
+[
+  {
+    "id": "1",
+    "category": "Technology",
+    "categoryMn": "Технологи",
+    "title": "Sample Article",
+    "titleMn": "Жишээ нийтлэл",
+    "date": "2025-01-21",
+    "dateMn": "2025-01-21",
+    "image": "/uploads/sample.jpg",
+    "body": "This is a sample article content in English.",
+    "bodyMn": "Энэ бол монгол хэл дээрх жишээ нийтлэл юм."
+  }
+]

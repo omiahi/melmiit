@@ -6,6 +6,7 @@ import { FeaturedNews } from './components/FeaturedNews';
 import { LatestNews } from './components/LatestNews';
 import { Footer } from './components/Footer';
 import { ArticlePage } from './components/ArticlePage';
+import { Admin } from './pages/Admin';
 import { Article } from './data/articles';
 import { fetchArticles } from './lib/api';
 
@@ -51,6 +52,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage language={language} />} />
           <Route path="/article/:id" element={<ArticlePage language={language} />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
         <Footer language={language} />
       </div>
