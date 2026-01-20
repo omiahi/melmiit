@@ -178,19 +178,31 @@ export default function Admin() {
                     className="form-input form-input-sm"
                   />
 
-                  <div className="form-row">
-                    <input
-                      placeholder="Category (EN)"
-                      value={article.category || ''}
-                      onChange={e => updateArticle(article.id || '', 'category', e.target.value)}
-                      className="form-input"
-                    />
-                    <input
-                      placeholder="Category (MN)"
-                      value={article.categoryMn || ''}
-                      onChange={e => updateArticle(article.id || '', 'categoryMn', e.target.value)}
-                      className="form-input"
-                    />
+                  <div>
+                    <div className="category-label">Category</div>
+                    <div className="category-selector">
+                      {['WORLD', 'POLITICS', 'BUSINESS', 'CULTURE', 'INTERNATIONAL'].map(cat => (
+                        <button
+                          key={cat}
+                          type="button"
+                          className={`category-btn ${article.category === cat ? 'active' : ''}`}
+                          onClick={() => {
+                            updateArticle(article.id || '', 'category', cat);
+                            // Auto-set Mongolian category
+                            const mnCategories: Record<string, string> = {
+                              'WORLD': 'ДЭЛХИЙ',
+                              'POLITICS': 'УЛСТӨР',
+                              'BUSINESS': 'БИЗНЕС',
+                              'CULTURE': 'СОЁЛ',
+                              'INTERNATIONAL': 'ОЛОН УЛСЫН'
+                            };
+                            updateArticle(article.id || '', 'categoryMn', mnCategories[cat] || '');
+                          }}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="form-row">

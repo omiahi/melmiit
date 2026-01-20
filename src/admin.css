@@ -164,6 +164,46 @@ body {
   font-size: 0.8rem;
 }
 
+/* Category Selection Buttons */
+.category-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.category-btn {
+  padding: 0.5rem 1rem;
+  background: #3a3a3a;
+  border: 2px solid #4a4a4a;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.category-btn:hover {
+  background: #4a4a4a;
+  border-color: #5a5a5a;
+}
+
+.category-btn.active {
+  background: #4a9eff;
+  border-color: #4a9eff;
+  color: #fff;
+}
+
+.category-label {
+  font-size: 0.75rem;
+  color: #999;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 /* Messages */
 .message {
   background: #2a2a2a;
