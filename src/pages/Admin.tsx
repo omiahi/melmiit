@@ -2,17 +2,23 @@ import { useState, useEffect } from 'react';
 
 /**
  * Article type matching content/articles.json schema
+ * All fields optional for safety - articles.json may have incomplete data
  */
 interface Article {
-  id: string;
-  category: string;
-  categoryMn: string;
-  title: string;
-  titleMn: string;
-  date: string;
-  dateMn: string;
-  image: string;
-  body: string;
+  id?: string;
+  category?: string;
+  categoryMn?: string;
+  title?: string;
+  titleMn?: string;
+  date?: string;
+  dateMn?: string;
+  image?: string;
+  excerpt?: string;
+  excerptMn?: string;
+  content?: string;
+  contentMn?: string;
+  // Legacy fields for backward compatibility
+  body?: string;
   bodyMn?: string;
 }
 
@@ -91,11 +97,13 @@ export default function Admin() {
       date: new Date().toISOString().split('T')[0],
       dateMn: '',
       image: '',
-      body: '',
-      bodyMn: '',
+      excerpt: '',
+      excerptMn: '',
+      content: '',
+      contentMn: '',
     };
     setArticles([...articles, newArticle]);
-    setEditingId(newArticle.id);
+    setEditingId(newArticle.id || '');
   };
 
   // Update article field
@@ -151,8 +159,8 @@ export default function Admin() {
         {message && <div className="message">{message}</div>}
 
         <div className="article-list">
-          {articles.map(article => (
-            <div key={article.id} className="article-card">
+          {articles.map((article, index) => (
+            <div key={article.id || `article-${index}`} className="article-card">
               {editingId === article.id ? (
                 // Edit mode
                 <div className="article-edit">
@@ -165,22 +173,22 @@ export default function Admin() {
 
                   <input
                     placeholder="ID"
-                    value={article.id}
-                    onChange={e => updateArticle(article.id, 'id', e.target.value)}
+                    value={article.id || ''}
+                    onChange={e => updateArticle(article.id || '', 'id', e.target.value)}
                     className="form-input form-input-sm"
                   />
 
                   <div className="form-row">
                     <input
                       placeholder="Category (EN)"
-                      value={article.category}
-                      onChange={e => updateArticle(article.id, 'category', e.target.value)}
+                      value={article.category || ''}
+                      onChange={e => updateArticle(article.id || '', 'category', e.target.value)}
                       className="form-input"
                     />
                     <input
                       placeholder="Category (MN)"
-                      value={article.categoryMn}
-                      onChange={e => updateArticle(article.id, 'categoryMn', e.target.value)}
+                      value={article.categoryMn || ''}
+                      onChange={e => updateArticle(article.id || '', 'categoryMn', e.target.value)}
                       className="form-input"
                     />
                   </div>
@@ -188,14 +196,14 @@ export default function Admin() {
                   <div className="form-row">
                     <input
                       placeholder="Title (EN)"
-                      value={article.title}
-                      onChange={e => updateArticle(article.id, 'title', e.target.value)}
+                      value={article.title || ''}
+                      onChange={e => updateArticle(article.id || '', 'title', e.target.value)}
                       className="form-input"
                     />
                     <input
                       placeholder="Title (MN)"
-                      value={article.titleMn}
-                      onChange={e => updateArticle(article.id, 'titleMn', e.target.value)}
+                      value={article.titleMn || ''}
+                      onChange={e => updateArticle(article.id || '', 'titleMn', e.target.value)}
                       className="form-input"
                     />
                   </div>
@@ -203,52 +211,66 @@ export default function Admin() {
                   <div className="form-row">
                     <input
                       type="date"
-                      value={article.date}
-                      onChange={e => updateArticle(article.id, 'date', e.target.value)}
+                      value={article.date || ''}
+                      onChange={e => updateArticle(article.id || '', 'date', e.target.value)}
                       className="form-input"
                     />
                     <input
                       placeholder="Date (MN)"
-                      value={article.dateMn}
-                      onChange={e => updateArticle(article.id, 'dateMn', e.target.value)}
+                      value={article.dateMn || ''}
+                      onChange={e => updateArticle(article.id || '', 'dateMn', e.target.value)}
                       className="form-input"
                     />
                   </div>
 
                   <input
                     placeholder="Image URL"
-                    value={article.image}
-                    onChange={e => updateArticle(article.id, 'image', e.target.value)}
+                    value={article.image || ''}
+                    onChange={e => updateArticle(article.id || '', 'image', e.target.value)}
                     className="form-input"
                   />
 
                   <textarea
-                    placeholder="Body (EN)"
-                    value={article.body}
-                    onChange={e => updateArticle(article.id, 'body', e.target.value)}
+                    placeholder="Excerpt (EN)"
+                    value={article.excerpt || article.body || ''}
+                    onChange={e => updateArticle(article.id || '', 'excerpt', e.target.value)}
                     className="form-textarea"
                   />
 
                   <textarea
-                    placeholder="Body (MN)"
-                    value={article.bodyMn || ''}
-                    onChange={e => updateArticle(article.id, 'bodyMn', e.target.value)}
+                    placeholder="Excerpt (MN)"
+                    value={article.excerptMn || article.bodyMn || ''}
+                    onChange={e => updateArticle(article.id || '', 'excerptMn', e.target.value)}
                     className="form-textarea"
                   />
 
-                  <button onClick={() => deleteArticle(article.id)} className="btn btn-danger btn-sm">
+                  <textarea
+                    placeholder="Content (EN)"
+                    value={article.content || ''}
+                    onChange={e => updateArticle(article.id || '', 'content', e.target.value)}
+                    className="form-textarea"
+                  />
+
+                  <textarea
+                    placeholder="Content (MN)"
+                    value={article.contentMn || ''}
+                    onChange={e => updateArticle(article.id || '', 'contentMn', e.target.value)}
+                    className="form-textarea"
+                  />
+
+                  <button onClick={() => deleteArticle(article.id || '')} className="btn btn-danger btn-sm">
                     Delete Article
                   </button>
                 </div>
               ) : (
                 // View mode
-                <div onClick={() => setEditingId(article.id)} className="article-card-view">
+                <div onClick={() => setEditingId(article.id || '')} className="article-card-view">
                   <h3>{article.title || 'Untitled'}</h3>
                   <div className="article-meta">
-                    <p>ID: {article.id}</p>
-                    <p>Category: {article.category} / {article.categoryMn}</p>
-                    <p>Date: {article.date}</p>
-                    <p>Body: {article.body.substring(0, 100)}...</p>
+                    <p>ID: {article.id || 'N/A'}</p>
+                    <p>Category: {article.category || 'N/A'} / {article.categoryMn || 'N/A'}</p>
+                    <p>Date: {article.date || 'N/A'}</p>
+                    <p>Preview: {(article.content || article.body || article.excerpt || '').substring(0, 100)}...</p>
                   </div>
                   <p className="article-hint">Click to edit</p>
                 </div>
