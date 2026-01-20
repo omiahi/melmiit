@@ -90,8 +90,8 @@ export default function Admin() {
   const handleAddNew = () => {
     const newArticle: Article = {
       id: Date.now().toString(),
-      category: '',
-      categoryMn: '',
+      category: 'WORLD',
+      categoryMn: 'ДЭЛХИЙ',
       title: '',
       titleMn: '',
       date: new Date().toISOString().split('T')[0],
@@ -179,29 +179,33 @@ export default function Admin() {
                   />
 
                   <div>
-                    <div className="category-label">Category</div>
+                    <div className="category-label">Category: {article.category || 'None'}</div>
                     <div className="category-selector">
-                      {['WORLD', 'POLITICS', 'BUSINESS', 'CULTURE', 'INTERNATIONAL'].map(cat => (
-                        <button
-                          key={cat}
-                          type="button"
-                          className={`category-btn ${article.category === cat ? 'active' : ''}`}
-                          onClick={() => {
-                            updateArticle(article.id || '', 'category', cat);
-                            // Auto-set Mongolian category
-                            const mnCategories: Record<string, string> = {
-                              'WORLD': 'ДЭЛХИЙ',
-                              'POLITICS': 'УЛСТӨР',
-                              'BUSINESS': 'БИЗНЕС',
-                              'CULTURE': 'СОЁЛ',
-                              'INTERNATIONAL': 'ОЛОН УЛСЫН'
-                            };
-                            updateArticle(article.id || '', 'categoryMn', mnCategories[cat] || '');
-                          }}
-                        >
-                          {cat}
-                        </button>
-                      ))}
+                      {['WORLD', 'POLITICS', 'BUSINESS', 'CULTURE', 'INTERNATIONAL'].map(cat => {
+                        const isActive = article.category === cat;
+                        return (
+                          <button
+                            key={cat}
+                            type="button"
+                            className={`category-btn ${isActive ? 'active' : ''}`}
+                            onClick={() => {
+                              console.log('Clicking category:', cat, 'Current:', article.category);
+                              updateArticle(article.id || '', 'category', cat);
+                              // Auto-set Mongolian category
+                              const mnCategories: Record<string, string> = {
+                                'WORLD': 'ДЭЛХИЙ',
+                                'POLITICS': 'УЛСТӨР',
+                                'BUSINESS': 'БИЗНЕС',
+                                'CULTURE': 'СОЁЛ',
+                                'INTERNATIONAL': 'ОЛОН УЛСЫН'
+                              };
+                              updateArticle(article.id || '', 'categoryMn', mnCategories[cat] || '');
+                            }}
+                          >
+                            {cat}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
