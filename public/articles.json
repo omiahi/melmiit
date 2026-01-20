@@ -1,15 +1,15 @@
 [
   {
-    "id": "1",
-    "category": "Technology",
-    "categoryMn": "Технологи",
-    "title": "Sample Article",
-    "titleMn": "Жишээ нийтлэл",
-    "date": "2025-01-21",
-    "dateMn": "2025-01-21",
-    "image": "/uploads/sample.jpg",
-    "body": "This is a sample article content in English.",
-    "bodyMn": "Энэ бол монгол хэл дээрх жишээ нийтлэл юм."
+    "id": "1768948261096",
+    "category": "",
+    "categoryMn": "",
+    "title": "",
+    "titleMn": "",
+    "date": "2026-01-20",
+    "dateMn": "",
+    "image": "",
+    "body": "",
+    "bodyMn": ""
   },
   {
     "id": "1768948267746",
@@ -34,41 +34,5 @@
     "image": "",
     "body": "",
     "bodyMn": ""
-  },
-  {
-    "id": "1768948277129",
-    "category": "",
-    "categoryMn": "",
-    "title": "",
-    "titleMn": "",
-    "date": "2026-01-20",
-    "dateMn": "",
-    "image": "",
-    "body": "",
-    "bodyMn": ""
-  },
-  {
-    "id": "1768948278563",
-    "category": "what ",
-    "categoryMn": "did",
-    "title": "d",
-    "titleMn": "d",
-    "date": "2026-01-20",
-    "dateMn": "d",
-    "image": "d",
-    "body": "d",
-    "bodyMn": "d"
-  },
-  {
-    "id": "1768948292046",
-    "category": "test",
-    "categoryMn": "test",
-    "title": "test",
-    "titleMn": "test",
-    "date": "2026-01-20",
-    "dateMn": "test",
-    "image": "test",
-    "body": "test",
-    "bodyMn": "test"
   }
 ]
