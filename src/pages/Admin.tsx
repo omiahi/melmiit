@@ -108,7 +108,7 @@ export default function Admin() {
 
   // Update article field
   const updateArticle = (id: string, field: keyof Article, value: string) => {
-    setArticles(articles.map(a =>
+    setArticles(prevArticles => prevArticles.map(a =>
       a.id === id ? { ...a, [field]: value } : a
     ));
   };
