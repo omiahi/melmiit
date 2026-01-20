@@ -44,10 +44,13 @@ export default function Admin() {
   // Simple password check
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // In production, check against environment variable on server
-    // For now, hardcoded for simplicity (will validate on API)
-    if (password) {
+    // Check against environment variable (VITE_ADMIN_PASSWORD)
+    const correctPassword = import.meta.env.VITE_ADMIN_PASSWORD;
+    if (password === correctPassword) {
       setAuthenticated(true);
+    } else {
+      setMessage('❌ Invalid password');
+      setPassword('');
     }
   };
 
@@ -112,23 +115,18 @@ export default function Admin() {
   // Login screen
   if (!authenticated) {
     return (
-      <div className="min-h-screen bg-zinc-900 flex items-center justify-center p-4">
-        <form onSubmit={handleLogin} className="bg-zinc-800 p-8 rounded-lg max-w-md w-full">
-          <h1 className="text-2xl font-bold mb-6">Admin Login</h1>
+      <div className="admin-login-page">
+        <form onSubmit={handleLogin} className="admin-login-form">
+          <h1>Admin Login</h1>
+          {message && <div className="admin-error">{message}</div>}
           <input
             type="password"
             placeholder="Enter password"
             value={password}
             onChange={e => setPassword(e.target.value)}
-            className="w-full px-4 py-2 bg-zinc-700 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
             autoFocus
           />
-          <button
-            type="submit"
-            className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold"
-          >
-            Login
-          </button>
+          <button type="submit">Login</button>
         </form>
       </div>
     );
@@ -136,45 +134,31 @@ export default function Admin() {
 
   // Admin panel
   return (
-    <div className="min-h-screen bg-zinc-900 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Article Manager</h1>
-          <div className="flex gap-2">
-            <button
-              onClick={handleAddNew}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded font-semibold"
-            >
+    <div className="admin-panel">
+      <div className="admin-container">
+        <div className="admin-header">
+          <h1>Article Manager</h1>
+          <div className="admin-actions">
+            <button onClick={handleAddNew} className="btn btn-success">
               + Add New Article
             </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded font-semibold disabled:opacity-50"
-            >
+            <button onClick={handleSave} disabled={saving} className="btn btn-primary">
               {saving ? 'Saving...' : 'Save All Changes'}
             </button>
           </div>
         </div>
 
-        {message && (
-          <div className="mb-4 p-4 bg-zinc-800 rounded">
-            {message}
-          </div>
-        )}
+        {message && <div className="message">{message}</div>}
 
-        <div className="space-y-4">
+        <div className="article-list">
           {articles.map(article => (
-            <div key={article.id} className="bg-zinc-800 p-6 rounded-lg">
+            <div key={article.id} className="article-card">
               {editingId === article.id ? (
                 // Edit mode
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-bold text-lg">Editing: {article.title || 'New Article'}</h3>
-                    <button
-                      onClick={() => setEditingId(null)}
-                      className="px-3 py-1 bg-zinc-700 hover:bg-zinc-600 rounded text-sm"
-                    >
+                <div className="article-edit">
+                  <div className="article-edit-header">
+                    <h3>Editing: {article.title || 'New Article'}</h3>
+                    <button onClick={() => setEditingId(null)} className="btn btn-secondary btn-sm">
                       Done
                     </button>
                   </div>
@@ -183,51 +167,51 @@ export default function Admin() {
                     placeholder="ID"
                     value={article.id}
                     onChange={e => updateArticle(article.id, 'id', e.target.value)}
-                    className="w-full px-3 py-2 bg-zinc-700 rounded text-sm"
+                    className="form-input form-input-sm"
                   />
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="form-row">
                     <input
                       placeholder="Category (EN)"
                       value={article.category}
                       onChange={e => updateArticle(article.id, 'category', e.target.value)}
-                      className="px-3 py-2 bg-zinc-700 rounded"
+                      className="form-input"
                     />
                     <input
                       placeholder="Category (MN)"
                       value={article.categoryMn}
                       onChange={e => updateArticle(article.id, 'categoryMn', e.target.value)}
-                      className="px-3 py-2 bg-zinc-700 rounded"
+                      className="form-input"
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="form-row">
                     <input
                       placeholder="Title (EN)"
                       value={article.title}
                       onChange={e => updateArticle(article.id, 'title', e.target.value)}
-                      className="px-3 py-2 bg-zinc-700 rounded"
+                      className="form-input"
                     />
                     <input
                       placeholder="Title (MN)"
                       value={article.titleMn}
                       onChange={e => updateArticle(article.id, 'titleMn', e.target.value)}
-                      className="px-3 py-2 bg-zinc-700 rounded"
+                      className="form-input"
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="form-row">
                     <input
                       type="date"
                       value={article.date}
                       onChange={e => updateArticle(article.id, 'date', e.target.value)}
-                      className="px-3 py-2 bg-zinc-700 rounded"
+                      className="form-input"
                     />
                     <input
                       placeholder="Date (MN)"
                       value={article.dateMn}
                       onChange={e => updateArticle(article.id, 'dateMn', e.target.value)}
-                      className="px-3 py-2 bg-zinc-700 rounded"
+                      className="form-input"
                     />
                   </div>
 
@@ -235,44 +219,38 @@ export default function Admin() {
                     placeholder="Image URL"
                     value={article.image}
                     onChange={e => updateArticle(article.id, 'image', e.target.value)}
-                    className="w-full px-3 py-2 bg-zinc-700 rounded"
+                    className="form-input"
                   />
 
                   <textarea
                     placeholder="Body (EN)"
                     value={article.body}
                     onChange={e => updateArticle(article.id, 'body', e.target.value)}
-                    className="w-full px-3 py-2 bg-zinc-700 rounded h-32"
+                    className="form-textarea"
                   />
 
                   <textarea
                     placeholder="Body (MN)"
                     value={article.bodyMn || ''}
                     onChange={e => updateArticle(article.id, 'bodyMn', e.target.value)}
-                    className="w-full px-3 py-2 bg-zinc-700 rounded h-32"
+                    className="form-textarea"
                   />
 
-                  <button
-                    onClick={() => deleteArticle(article.id)}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-sm"
-                  >
+                  <button onClick={() => deleteArticle(article.id)} className="btn btn-danger btn-sm">
                     Delete Article
                   </button>
                 </div>
               ) : (
                 // View mode
-                <div
-                  onClick={() => setEditingId(article.id)}
-                  className="cursor-pointer hover:bg-zinc-750"
-                >
-                  <h3 className="font-bold text-xl mb-2">{article.title || 'Untitled'}</h3>
-                  <div className="text-sm text-zinc-400 space-y-1">
+                <div onClick={() => setEditingId(article.id)} className="article-card-view">
+                  <h3>{article.title || 'Untitled'}</h3>
+                  <div className="article-meta">
                     <p>ID: {article.id}</p>
                     <p>Category: {article.category} / {article.categoryMn}</p>
                     <p>Date: {article.date}</p>
-                    <p className="truncate">Body: {article.body.substring(0, 100)}...</p>
+                    <p>Body: {article.body.substring(0, 100)}...</p>
                   </div>
-                  <p className="text-xs text-zinc-500 mt-2">Click to edit</p>
+                  <p className="article-hint">Click to edit</p>
                 </div>
               )}
             </div>
