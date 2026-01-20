@@ -10,5 +10,41 @@
     "image": "/uploads/sample.jpg",
     "body": "This is a sample article content in English.",
     "bodyMn": "Энэ бол монгол хэл дээрх жишээ нийтлэл юм."
+  },
+  {
+    "id": "1768948261096",
+    "category": "",
+    "categoryMn": "",
+    "title": "",
+    "titleMn": "",
+    "date": "2026-01-20",
+    "dateMn": "",
+    "image": "",
+    "body": "",
+    "bodyMn": ""
+  },
+  {
+    "id": "1768948267746",
+    "category": "",
+    "categoryMn": "",
+    "title": "",
+    "titleMn": "",
+    "date": "2026-01-20",
+    "dateMn": "",
+    "image": "",
+    "body": "",
+    "bodyMn": ""
+  },
+  {
+    "id": "1768948268213",
+    "category": "",
+    "categoryMn": "",
+    "title": "",
+    "titleMn": "",
+    "date": "2026-01-20",
+    "dateMn": "",
+    "image": "",
+    "body": "",
+    "bodyMn": ""
   }
 ]
