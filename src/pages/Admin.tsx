@@ -102,8 +102,8 @@ export default function Admin() {
       content: '',
       contentMn: '',
     };
-    setArticles([...articles, newArticle]);
-    setEditingId(newArticle.id || '');
+    setArticles([newArticle, ...articles]); // Add to beginning instead of end
+    setEditingId(newArticle.id);
   };
 
   // Update article field
