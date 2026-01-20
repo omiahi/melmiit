@@ -5,6 +5,8 @@ import logo from 'figma:asset/7af99ccca81e67ea546fd3afd91ac4248a65ee2b.png';
 interface HeaderProps {
   language: Language;
   setLanguage: (lang: Language) => void;
+  selectedCategory: string | null;
+  setSelectedCategory: (category: string | null) => void;
 }
 
 const translations = {
@@ -13,19 +15,23 @@ const translations = {
     politics: 'POLITICS',
     business: 'BUSINESS',
     culture: 'CULTURE',
-    opinion: 'OPINION',
+    international: 'INTERNATIONAL',
   },
   mn: {
     world: 'ДЭЛХИЙ',
     politics: 'УЛСТӨР',
     business: 'БИЗНЕС',
     culture: 'СОЁЛ',
-    opinion: 'САНАЛ',
+    international: 'ОЛОН УЛСЫН',
   },
 };
 
-export function Header({ language, setLanguage }: HeaderProps) {
+export function Header({ language, setLanguage, selectedCategory, setSelectedCategory }: HeaderProps) {
   const t = translations[language];
+
+  const handleCategoryClick = (category: string) => {
+    setSelectedCategory(selectedCategory === category ? null : category);
+  };
 
   return (
     <header className="border-b border-zinc-800">
@@ -68,21 +74,36 @@ export function Header({ language, setLanguage }: HeaderProps) {
       <nav className="bg-zinc-950 border-t border-zinc-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center gap-8 py-4">
-            <a href="#" className="text-sm tracking-widest hover:text-zinc-400 transition-colors">
+            <button
+              onClick={() => handleCategoryClick('WORLD')}
+              className="text-sm tracking-widest hover:text-zinc-400 transition-colors"
+            >
               {t.world}
-            </a>
-            <a href="#" className="text-sm tracking-widest hover:text-zinc-400 transition-colors">
+            </button>
+            <button
+              onClick={() => handleCategoryClick('POLITICS')}
+              className="text-sm tracking-widest hover:text-zinc-400 transition-colors"
+            >
               {t.politics}
-            </a>
-            <a href="#" className="text-sm tracking-widest hover:text-zinc-400 transition-colors">
+            </button>
+            <button
+              onClick={() => handleCategoryClick('BUSINESS')}
+              className="text-sm tracking-widest hover:text-zinc-400 transition-colors"
+            >
               {t.business}
-            </a>
-            <a href="#" className="text-sm tracking-widest hover:text-zinc-400 transition-colors">
+            </button>
+            <button
+              onClick={() => handleCategoryClick('CULTURE')}
+              className="text-sm tracking-widest hover:text-zinc-400 transition-colors"
+            >
               {t.culture}
-            </a>
-            <a href="#" className="text-sm tracking-widest hover:text-zinc-400 transition-colors">
-              {t.opinion}
-            </a>
+            </button>
+            <button
+              onClick={() => handleCategoryClick('INTERNATIONAL')}
+              className="text-sm tracking-widest hover:text-zinc-400 transition-colors"
+            >
+              {t.international}
+            </button>
           </div>
         </div>
       </nav>

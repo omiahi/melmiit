@@ -12,7 +12,7 @@ import { fetchArticles } from './lib/api';
 
 export type Language = 'en' | 'mn';
 
-function HomePage({ language }: { language: Language }) {
+function HomePage({ language, selectedCategory }: { language: Language; selectedCategory: string | null }) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,24 +33,35 @@ function HomePage({ language }: { language: Language }) {
 
   if (articles.length === 0) return null;
 
+  // Filter articles by selected category
+  const filteredArticles = selectedCategory
+    ? articles.filter(article => article.category === selectedCategory)
+    : articles;
+
   return (
     <>
-      <HeroSection language={language} articles={articles} />
-      <FeaturedNews language={language} articles={articles} />
-      <LatestNews language={language} articles={articles} />
+      <HeroSection language={language} articles={filteredArticles} />
+      <FeaturedNews language={language} articles={filteredArticles} />
+      <LatestNews language={language} articles={filteredArticles} />
     </>
   );
 }
 
 export default function App() {
   const [language, setLanguage] = useState<Language>('en');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-black text-white">
-        <Header language={language} setLanguage={setLanguage} />
+        <Header
+          language={language}
+          setLanguage={setLanguage}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+        />
         <Routes>
-          <Route path="/" element={<HomePage language={language} />} />
+          <Route path="/" element={<HomePage language={language} selectedCategory={selectedCategory} />} />
           <Route path="/article/:id" element={<ArticlePage language={language} />} />
           <Route path="/admin" element={<Admin />} />
         </Routes>
