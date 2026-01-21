@@ -1,5 +1,19 @@
 [
   {
+    "id": "1768968413653",
+    "category": "WORLD",
+    "categoryMn": "ДЭЛХИЙ",
+    "title": "test",
+    "titleMn": "test",
+    "date": "2026-01-21",
+    "dateMn": "test",
+    "image": "",
+    "excerpt": "test",
+    "excerptMn": "test",
+    "content": "test",
+    "contentMn": "test"
+  },
+  {
     "id": "climate-summit-geneva",
     "category": "INTERNATIONAL",
     "categoryMn": "ОЛОН УЛСЫН",
