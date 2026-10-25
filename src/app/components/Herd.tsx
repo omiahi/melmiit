@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { drawHorse } from './horse';
+import { drawGallop, loadGallop } from './gallop';
 import { usePrefersReducedMotion } from '../state';
 
 interface Rider {
@@ -74,6 +74,8 @@ export function Herd({ className, compact = false }: { className?: string; compa
     let scrollBoost = 0;
     let lastScroll = window.scrollY;
     let time = 0;
+    // the camera tracks the riders, so the ground streams past beneath them
+    const groundOffset = [0, 0, 0];
 
     // soft dust sprite, drawn once
     const puff = document.createElement('canvas');
@@ -166,17 +168,32 @@ export function Herd({ className, compact = false }: { className?: string; compa
         const L = LAYERS[layerIndex];
         // narrow screens get smaller riders so the herd keeps its proportions
         const narrow = Math.min(1, Math.max(0.62, w / 1000));
-        const size = compact ? h * 0.36 : h * L.size * (layerIndex === 0 ? 1 : narrow);
-        const ground = compact ? h * 0.72 : h * (L.ground + 0);
+        const size = compact ? h * 0.52 : h * L.size * (layerIndex === 0 ? 1 : narrow);
+        const ground = compact ? h * 0.72 : h * L.ground;
         const fill = compact ? '#b8975a' : L.fill;
+
+        // grass and stones streaming past along this layer's ground
+        if (!compact && layerIndex > 0) {
+          ctx.fillStyle = layerIndex === 2 ? 'rgba(10,8,6,0.55)' : 'rgba(30,24,16,0.45)';
+          const gap = size * 0.9;
+          const off = groundOffset[layerIndex] % gap;
+          for (let gx = -off, n = 0; gx < w + gap; gx += gap, n++) {
+            const j = Math.sin((n + Math.floor(groundOffset[layerIndex] / gap)) * 12.9898) * 43758.5453;
+            const rnd = j - Math.floor(j);
+            const tx = gx + rnd * gap;
+            const th = size * (0.03 + rnd * 0.05);
+            ctx.fillRect(tx, ground + size * 0.02 - th, Math.max(1, size * 0.012), th);
+            ctx.fillRect(tx + size * 0.03, ground + size * 0.02 - th * 0.6, Math.max(1, size * 0.01), th * 0.6);
+          }
+        }
+
         for (const r of herd) {
           if (r.layer !== layerIndex) continue;
           const span = w + size * 3;
           const x = ((r.x * span) % span) - size * 1.5 + px * L.parallax;
-          drawHorse(ctx, x, ground + r.lane * h, size, r.phase % 1, time + r.phase * 3, {
-            fill,
-            rider: r.rider,
+          drawGallop(ctx, x, ground + r.lane * h, size * 1.35, r.phase, fill, dpr, {
             banner: r.banner,
+            t: time + r.phase * 3,
           });
         }
       }
@@ -189,21 +206,29 @@ export function Herd({ className, compact = false }: { className?: string; compa
       scrollBoost *= 0.94;
       pace += (targetPace + scrollBoost - pace) * Math.min(1, dt * 2.5);
 
+      const strideRate = 1.55 + pace * 0.9; // strides per second
+      if (!compact) {
+        for (const i of [1, 2]) {
+          // one stride covers about 2.6 figure-heights of ground
+          const size = h * LAYERS[i].size * Math.min(1, Math.max(0.62, w / 1000)) * 1.35;
+          groundOffset[i] += (size * 2.6 * strideRate - LAYERS[i].speed * pace * w) * dt * 0.55;
+        }
+      }
       for (const r of herd) {
         const L = LAYERS[r.layer];
         r.x += (L.speed * pace * r.speed * dt * (compact ? 0.6 : 1));
         if (r.x > 1) r.x -= 1;
         // stride rate rises with pace; nearer horses take visibly longer strides
-        r.phase += dt * (1.55 + pace * 0.9) * r.speed;
+        r.phase += dt * strideRate * r.speed;
         // dust from the mid and near horses on footfall
         if (!compact && r.layer > 0 && Math.random() < dt * 6 * pace) {
           const size = h * L.size;
           const span = w + size * 3;
           const x = ((r.x * span) % span) - size * 1.5;
           dust.push({
-            x: x - size * 0.3 + Math.random() * size * 0.5,
+            x: x - size * 0.6 + Math.random() * size * 0.9,
             y: h * L.ground + r.lane * h - Math.random() * size * 0.05,
-            vx: -(20 + Math.random() * 30) * (r.layer === 2 ? 1.5 : 1),
+            vx: -(60 + Math.random() * 60) * (r.layer === 2 ? 2.2 : 1),
             vy: -(4 + Math.random() * 10),
             r: size * (0.12 + Math.random() * 0.14),
             life: 1,
@@ -224,6 +249,7 @@ export function Herd({ className, compact = false }: { className?: string; compa
 
     resize();
     drawScene();
+    loadGallop().then(drawScene, () => undefined);
     const ro = new ResizeObserver(() => {
       resize();
       drawScene();

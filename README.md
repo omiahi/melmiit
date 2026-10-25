@@ -21,7 +21,7 @@ The admin panel's API (`api/`) runs on Vercel. To try it locally, use `vercel de
 | --- | --- |
 | `src/app/components/Hero.tsx` | Front-page opening: the emblem above the steppe |
 | `src/app/components/Herd.tsx` | The horsemen crossing the horizon (pace follows the pointer and scrolling) |
-| `src/app/components/horse.ts` | Draws one galloping horse and rider |
+| `src/app/components/gallop.ts` | Draws a galloping horseman from Muybridge's 1878 photographs (public domain), using `public/brand/horse-gallop.webp` |
 | `src/app/pages.tsx` | Front page, section pages, story page, 404 |
 | `src/app/data.ts` | Story type, sections (Diplomacy, Geopolitics, Security, Economy & trade, Mongolia & the world, Culture), and all interface text in both languages |
 | `src/admin/Admin.tsx` | The newsroom editor at /admin |
