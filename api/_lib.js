@@ -4,6 +4,7 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 export const REPO = process.env.GITHUB_REPO || 'omiahi/melmiit';
 export const BRANCH = process.env.GITHUB_BRANCH || 'main';
 export const ARTICLES_PATH = 'public/articles.json';
+export const AUTHORS_PATH = 'public/authors.json';
 
 /** Constant-time password check against the ADMIN_PASSWORD environment variable. */
 export function passwordOk(given) {

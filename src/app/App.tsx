@@ -4,7 +4,7 @@ import { CATEGORIES } from './data';
 import { SiteProvider, useSite } from './state';
 import { Header } from './components/Header';
 import { Herd } from './components/Herd';
-import { ArticlePage, HomePage, NotFoundPage, SectionPage } from './pages';
+import { ArticlePage, AuthorPage, CountryPage, HomePage, NotFoundPage, SectionPage } from './pages';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -63,6 +63,8 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/section/:slug" element={<SectionPage />} />
             <Route path="/article/:id" element={<ArticlePage />} />
+            <Route path="/country/:code" element={<CountryPage />} />
+            <Route path="/author/:id" element={<AuthorPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </main>

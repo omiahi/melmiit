@@ -4,7 +4,8 @@
 
 1. Go to **melmiit.com/admin** and sign in with the admin password.
 2. Press **New story**.
-3. Pick the **section** (Diplomacy, Geopolitics, Security, Economy & trade, Mongolia & the world, Culture). The date fills in with today.
+3. Pick the **type** (News, Analysis, Interview, Brief, Opinion), the **section** (Diplomacy, Geopolitics, Security, Economy & trade, Mongolia & the world, Culture) and the **writer**. The date fills in with today.
+   Under **Countries**, tick each country the story is about. It then appears on the "Mongolia and the world" map under those countries.
 4. Add a **photo**: press *Choose photo* or drag one into the box. It is resized for you. Landscape photos look best.
 5. Fill in the **English** side: headline, a one- or two-sentence summary, and the story. Leave a blank line between paragraphs.
 6. Fill in the **Монгол** side the same way. If you skip it, the Mongolian site shows the English text until you add it.
@@ -12,6 +13,20 @@
 8. Press **Publish** in the bar at the bottom. When it says *Published*, the site updates in about a minute.
 
 To fix a typo or change a photo later, open the story from the list, make the change, and press **Publish** again. To remove a story, open it, press **Delete story**, then **Publish**.
+
+## Writers
+
+Open the **Writers** tab and press **New writer**. Add a portrait, their name, title (for example *Senior analyst, Northeast Asia*) and a two- or three-sentence bio, in English and Mongolian. Then choose them under **Writer** on their stories and press **Publish**. Each writer gets a page on the site listing their work. For a one-off contributor, choose **Guest writer…** on the story instead.
+
+## The Brief (newsletter)
+
+The signup box stays hidden until the newsletter is connected:
+
+1. Create a free account at **buttondown.com** and name the newsletter *The Brief*.
+2. In Buttondown, open **Settings → API** and copy the API key.
+3. In Vercel → **Settings → Environment Variables**, add `BUTTONDOWN_API_KEY` with that key, then redeploy.
+
+Subscribers are collected in Buttondown. You write and send each issue there.
 
 ## One-time setup (do this once)
 

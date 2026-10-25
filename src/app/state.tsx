@@ -1,11 +1,12 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { loadArticles, UI, type Article, type Lang } from './data';
+import { loadArticles, loadAuthors, UI, type Article, type Author, type Lang } from './data';
 
 interface SiteState {
   lang: Lang;
   setLang: (l: Lang) => void;
   ui: (typeof UI)['en'];
   articles: Article[];
+  authors: Author[];
   status: 'loading' | 'ready' | 'error';
 }
 
@@ -24,12 +25,14 @@ function initialLang(): Lang {
 export function SiteProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(initialLang);
   const [articles, setArticles] = useState<Article[]>([]);
+  const [authors, setAuthors] = useState<Author[]>([]);
   const [status, setStatus] = useState<SiteState['status']>('loading');
 
   useEffect(() => {
-    loadArticles()
-      .then((list) => {
+    Promise.all([loadArticles(), loadAuthors()])
+      .then(([list, writers]) => {
         setArticles(list);
+        setAuthors(writers);
         setStatus('ready');
       })
       .catch(() => setStatus('error'));
@@ -48,7 +51,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  return <Ctx.Provider value={{ lang, setLang, ui: UI[lang], articles, status }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ lang, setLang, ui: UI[lang], articles, authors, status }}>{children}</Ctx.Provider>;
 }
 
 export function useSite() {

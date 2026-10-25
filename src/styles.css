@@ -101,6 +101,35 @@ body {
 }
 
 
+/* Map labels: SVG units, enlarged when the map is drawn small on phones */
+.map-label { font-size: 12px; }
+.map-ring-label { font-size: 9px; }
+@media (max-width: 640px) {
+  .map-label { font-size: 19px; }
+  .map-ring-label { font-size: 14px; }
+}
+
+/* Map: a light travels from Ulaanbaatar along each route, then rests */
+.map-dispatch {
+  stroke-dasharray: 4 200;
+  stroke-dashoffset: 4;
+  animation: dispatch 8s linear infinite;
+}
+@keyframes dispatch {
+  0% { stroke-dashoffset: 4; }
+  28% { stroke-dashoffset: -100; }
+  100% { stroke-dashoffset: -100; }
+}
+.map-ub {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ub-pulse 3.6s ease-out infinite;
+}
+@keyframes ub-pulse {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

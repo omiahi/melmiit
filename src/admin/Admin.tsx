@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ImagePlus, Loader2, LogOut, Plus, Trash2, X } from 'lucide-react';
-import { CATEGORIES, categoryOf, type Article } from '../app/data';
+import { CATEGORIES, KINDS, PARTNERS, categoryOf, type Article, type Author, type StoryKind } from '../app/data';
 
 /* ------------------------------------------------------------------ */
 /* Types & helpers                                                     */
@@ -46,13 +46,22 @@ async function api<T>(path: string, body: unknown): Promise<T> {
 }
 
 /** Shrink a photo in the browser: max 1800px wide, JPEG. Keeps uploads fast and the site light. */
-async function compressPhoto(file: File): Promise<Blob> {
+async function compressPhoto(file: File, square = false): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, 1800 / bitmap.width);
   const canvas = document.createElement('canvas');
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  if (square) {
+    // portraits: centre-crop to a square, 600px
+    const side = Math.min(bitmap.width, bitmap.height);
+    canvas.width = canvas.height = Math.min(600, side);
+    canvas
+      .getContext('2d')!
+      .drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, canvas.width, canvas.height);
+  } else {
+    const scale = Math.min(1, 1800 / bitmap.width);
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  }
   return new Promise((resolve, reject) =>
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not read that photo.'))), 'image/jpeg', 0.84),
   );
@@ -179,22 +188,33 @@ type Status =
 
 function Manager({ password, onLogout }: { password: string; onLogout: () => void }) {
   const [articles, setArticles] = useState<Article[] | null>(null);
+  const [authors, setAuthors] = useState<Author[]>([]);
   const [saved, setSaved] = useState('');
+  const [tab, setTab] = useState<'stories' | 'writers'>('stories');
   const [editing, setEditing] = useState<string | null>(null);
+  const [editingWriter, setEditingWriter] = useState<string | null>(null);
+  // pending photos: story id, or "w:<writer id>"
   const [photos, setPhotos] = useState<Record<string, PendingPhoto>>({});
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
 
+  const snapshot = (a: Article[], w: Author[]) => JSON.stringify([a, w]);
+
   const load = async () => {
     try {
-      const data = await api<{ articles: Article[] }>('/api/articles', { password });
+      const data = await api<{ articles: Article[]; authors?: Author[] }>('/api/articles', { password });
+      const w = data.authors || [];
       setArticles(data.articles);
-      setSaved(JSON.stringify(data.articles));
+      setAuthors(w);
+      setSaved(snapshot(data.articles, w));
     } catch {
-      // Fall back to the published copy if GitHub can't be reached
-      const res = await fetch('/articles.json', { cache: 'no-store' });
-      const list = (await res.json()) as Article[];
+      // Fall back to the published copies if GitHub can't be reached
+      const list = (await (await fetch('/articles.json', { cache: 'no-store' })).json()) as Article[];
+      const w = await fetch('/authors.json', { cache: 'no-store' })
+        .then((r) => (r.ok ? r.json() : []))
+        .catch(() => []);
       setArticles(list);
-      setSaved(JSON.stringify(list));
+      setAuthors(w);
+      setSaved(snapshot(list, w));
     }
   };
 
@@ -203,7 +223,8 @@ function Manager({ password, onLogout }: { password: string; onLogout: () => voi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const dirty = articles !== null && (JSON.stringify(articles) !== saved || Object.keys(photos).length > 0);
+  const dirty =
+    articles !== null && (snapshot(articles, authors) !== saved || Object.keys(photos).length > 0);
 
   useEffect(() => {
     if (!dirty) return;
@@ -212,13 +233,23 @@ function Manager({ password, onLogout }: { password: string; onLogout: () => voi
     return () => window.removeEventListener('beforeunload', warn);
   }, [dirty]);
 
+  const setPhoto = (key: string, p: PendingPhoto | null) =>
+    setPhotos((all) => {
+      if (all[key]) URL.revokeObjectURL(all[key].preview);
+      const next = { ...all };
+      if (p) next[key] = p;
+      else delete next[key];
+      return next;
+    });
+
+  /* stories */
   const update = (id: string, patch: Partial<Article>) =>
     setArticles((list) => list!.map((a) => (a.id === id ? { ...a, ...patch } : a)));
 
   const addNew = () => {
     const taken = new Set(articles!.map((a) => a.id));
     const id = uniqueId(`new-${today()}`, taken);
-    const a: Article = { id, category: 'DIPLOMACY', categoryMn: 'ДИПЛОМАТ', title: '', date: today() };
+    const a: Article = { id, category: 'DIPLOMACY', categoryMn: 'ДИПЛОМАТ', kind: 'news', title: '', date: today() };
     setArticles([a, ...articles!]);
     setEditing(id);
   };
@@ -227,7 +258,7 @@ function Manager({ password, onLogout }: { password: string; onLogout: () => voi
     const a = articles!.find((x) => x.id === id);
     if (!confirm(`Delete “${a?.title || a?.titleMn || 'this story'}”? It disappears from the site when you publish.`)) return;
     setArticles(articles!.filter((x) => x.id !== id));
-    setPhotos(({ [id]: _, ...rest }) => rest);
+    setPhoto(id, null);
     setEditing(null);
   };
 
@@ -239,22 +270,54 @@ function Manager({ password, onLogout }: { password: string; onLogout: () => voi
     setArticles(list);
   };
 
+  /* writers */
+  const updateWriter = (id: string, patch: Partial<Author>) =>
+    setAuthors((list) => list.map((w) => (w.id === id ? { ...w, ...patch } : w)));
+
+  const addWriter = () => {
+    const id = uniqueId(`new-writer-${Date.now().toString(36)}`, new Set(authors.map((w) => w.id)));
+    setAuthors([...authors, { id, name: '' }]);
+    setEditingWriter(id);
+  };
+
+  const removeWriter = (id: string) => {
+    const w = authors.find((x) => x.id === id);
+    const used = articles!.filter((a) => a.authorId === id).length;
+    const note = used ? ` Their ${used} ${used === 1 ? 'story keeps' : 'stories keep'} running under the Dayan Melmiit name.` : '';
+    if (!confirm(`Remove ${w?.name || 'this writer'}?${note}`)) return;
+    setAuthors(authors.filter((x) => x.id !== id));
+    setArticles(articles!.map((a) => (a.authorId === id ? { ...a, authorId: undefined } : a)));
+    setPhoto(`w:${id}`, null);
+    setEditingWriter(null);
+  };
+
   const publish = async () => {
     if (!articles) return;
     const untitled = articles.find((a) => !a.title?.trim() && !a.titleMn?.trim());
     if (untitled) {
+      setTab('stories');
       setEditing(untitled.id);
       setStatus({ kind: 'error', text: 'Give every story a title before publishing.' });
+      return;
+    }
+    const unnamed = authors.find((w) => !w.name?.trim());
+    if (unnamed) {
+      setTab('writers');
+      setEditingWriter(unnamed.id);
+      setStatus({ kind: 'error', text: 'Give every writer a name before publishing.' });
       return;
     }
     try {
       // 1. Upload photos waiting to go up
       let list = articles;
+      let writers = authors;
       const files: { path: string; sha: string }[] = [];
       const entries = Object.entries(photos);
       for (let n = 0; n < entries.length; n++) {
-        const [id, p] = entries[n];
-        if (!list.some((a) => a.id === id)) continue;
+        const [key, p] = entries[n];
+        const isWriter = key.startsWith('w:');
+        const id = isWriter ? key.slice(2) : key;
+        if (isWriter ? !writers.some((w) => w.id === id) : !list.some((a) => a.id === id)) continue;
         setStatus({ kind: 'busy', text: `Uploading photo ${n + 1} of ${entries.length}…` });
         const up =
           p.upload ||
@@ -266,10 +329,11 @@ function Manager({ password, onLogout }: { password: string; onLogout: () => voi
           }));
         p.upload = up;
         files.push({ path: up.path, sha: up.sha });
-        list = list.map((a) => (a.id === id ? { ...a, image: up.url } : a));
+        if (isWriter) writers = writers.map((w) => (w.id === id ? { ...w, photo: up.url } : w));
+        else list = list.map((a) => (a.id === id ? { ...a, image: up.url } : a));
       }
 
-      // 2. Give new stories a readable web address based on the English title
+      // 2. Readable web addresses for new stories and writers
       const taken = new Set(list.filter((a) => !a.id.startsWith('new-')).map((a) => a.id));
       list = list.map((a) => {
         if (!a.id.startsWith('new-')) return a;
@@ -277,15 +341,27 @@ function Manager({ password, onLogout }: { password: string; onLogout: () => voi
         taken.add(id);
         return { ...a, id };
       });
+      const wTaken = new Set(writers.filter((w) => !w.id.startsWith('new-writer-')).map((w) => w.id));
+      const renamed: Record<string, string> = {};
+      writers = writers.map((w) => {
+        if (!w.id.startsWith('new-writer-')) return w;
+        const id = uniqueId(slugify(w.name) || 'writer', wTaken);
+        wTaken.add(id);
+        renamed[w.id] = id;
+        return { ...w, id };
+      });
+      list = list.map((a) => (a.authorId && renamed[a.authorId] ? { ...a, authorId: renamed[a.authorId] } : a));
 
       // 3. One commit with everything
       setStatus({ kind: 'busy', text: 'Publishing…' });
-      await api('/api/save-articles', { password, articles: list, files });
+      await api('/api/save-articles', { password, articles: list, authors: writers, files });
       setArticles(list);
-      setSaved(JSON.stringify(list));
+      setAuthors(writers);
+      setSaved(snapshot(list, writers));
       Object.values(photos).forEach((p) => URL.revokeObjectURL(p.preview));
       setPhotos({});
       setEditing(null);
+      setEditingWriter(null);
       setStatus({ kind: 'ok', text: 'Published. The site updates in about a minute.' });
     } catch (err) {
       setStatus({ kind: 'error', text: (err as Error).message });
@@ -293,6 +369,23 @@ function Manager({ password, onLogout }: { password: string; onLogout: () => voi
   };
 
   const current = articles?.find((a) => a.id === editing);
+  const currentWriter = authors.find((w) => w.id === editingWriter);
+
+  const tabBtn = (key: 'stories' | 'writers', label: string, count: number) => (
+    <button
+      onClick={() => {
+        setTab(key);
+        setEditing(null);
+        setEditingWriter(null);
+      }}
+      aria-pressed={tab === key}
+      className={`border-b-2 px-1 pb-2 text-sm transition-colors ${
+        tab === key ? 'border-gold-bright text-parchment' : 'border-transparent text-mist hover:text-parchment'
+      }`}
+    >
+      {label} <span className="text-mist">{count}</span>
+    </button>
+  );
 
   return (
     <div className="min-h-screen bg-night pb-28">
@@ -317,86 +410,144 @@ function Manager({ password, onLogout }: { password: string; onLogout: () => voi
         ) : current ? (
           <Editor
             article={current}
+            authors={authors}
             photo={photos[current.id]}
             onChange={(patch) => update(current.id, patch)}
-            onPhoto={(p) =>
-              setPhotos((all) => {
-                if (all[current.id]) URL.revokeObjectURL(all[current.id].preview);
-                const next = { ...all };
-                if (p) next[current.id] = p;
-                else delete next[current.id];
-                return next;
-              })
-            }
+            onPhoto={(p) => setPhoto(current.id, p)}
             onDone={() => setEditing(null)}
             onDelete={() => remove(current.id)}
           />
+        ) : currentWriter ? (
+          <WriterEditor
+            writer={currentWriter}
+            photo={photos[`w:${currentWriter.id}`]}
+            onChange={(patch) => updateWriter(currentWriter.id, patch)}
+            onPhoto={(p) => setPhoto(`w:${currentWriter.id}`, p)}
+            onDone={() => setEditingWriter(null)}
+            onDelete={() => removeWriter(currentWriter.id)}
+          />
         ) : (
           <>
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <h1 className="font-display text-4xl font-semibold">Stories</h1>
-                <p className="mt-1 text-sm text-mist">
-                  The top story is the big one on the front page. Use the arrows to change the order.
-                </p>
-              </div>
-              <button
-                onClick={addNew}
-                className="flex items-center gap-2 rounded-lg bg-gold-bright px-4 py-2.5 font-medium text-night hover:bg-[#f5e0a8]"
-              >
-                <Plus className="h-4 w-4" /> New story
-              </button>
-            </div>
+            <nav className="mb-8 flex gap-6 border-b border-white/[0.07]">
+              {tabBtn('stories', 'Stories', articles.length)}
+              {tabBtn('writers', 'Writers', authors.length)}
+            </nav>
 
-            {articles.length === 0 && (
-              <p className="mt-16 text-center text-mist">No stories yet. Press “New story” to write the first one.</p>
-            )}
-
-            <ol className="mt-8 space-y-3">
-              {articles.map((a, i) => {
-                const img = photos[a.id]?.preview || a.image;
-                return (
-                  <li
-                    key={a.id}
-                    className="flex items-center gap-4 rounded-xl border border-white/[0.07] bg-white/[0.03] p-3 transition hover:border-gold/30"
+            {tab === 'stories' ? (
+              <>
+                <div className="flex flex-wrap items-end justify-between gap-4">
+                  <div>
+                    <h1 className="font-display text-4xl font-semibold">Stories</h1>
+                    <p className="mt-1 text-sm text-mist">
+                      The top story is the big one on the front page. Use the arrows to change the order.
+                    </p>
+                  </div>
+                  <button
+                    onClick={addNew}
+                    className="flex items-center gap-2 rounded-lg bg-gold-bright px-4 py-2.5 font-medium text-night hover:bg-[#f5e0a8]"
                   >
-                    <button onClick={() => setEditing(a.id)} className="flex min-w-0 flex-1 items-center gap-4 text-left">
-                      <div className="h-16 w-24 shrink-0 overflow-hidden rounded-md bg-dusk">
-                        {img && <img src={img} alt="" className="h-full w-full object-cover" />}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-xs text-gold">
-                          {i === 0 && <span className="mr-2 rounded bg-gold/20 px-1.5 py-0.5 text-gold-bright">Front page</span>}
-                          {categoryOf(a)?.en || a.category} · {a.date}
-                        </p>
-                        <p className="mt-1 truncate font-display text-xl font-semibold">
-                          {a.title || a.titleMn || <span className="italic text-mist">Untitled story</span>}
-                        </p>
-                        {!a.titleMn && a.title && <p className="text-xs text-mist">Mongolian version missing</p>}
-                      </div>
-                    </button>
-                    <div className="flex shrink-0 flex-col gap-1">
-                      <button
-                        onClick={() => move(i, -1)}
-                        disabled={i === 0}
-                        aria-label="Move up"
-                        className="rounded p-1.5 text-mist hover:bg-white/5 hover:text-parchment disabled:opacity-20"
+                    <Plus className="h-4 w-4" /> New story
+                  </button>
+                </div>
+
+                {articles.length === 0 && (
+                  <p className="mt-16 text-center text-mist">No stories yet. Press “New story” to write the first one.</p>
+                )}
+
+                <ol className="mt-8 space-y-3">
+                  {articles.map((a, i) => {
+                    const img = photos[a.id]?.preview || a.image;
+                    const kind = KINDS.find((k) => k.key === (a.kind || 'news'))?.en;
+                    return (
+                      <li
+                        key={a.id}
+                        className="flex items-center gap-4 rounded-xl border border-white/[0.07] bg-white/[0.03] p-3 transition hover:border-gold/30"
                       >
-                        <ArrowUp className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => move(i, 1)}
-                        disabled={i === articles.length - 1}
-                        aria-label="Move down"
-                        className="rounded p-1.5 text-mist hover:bg-white/5 hover:text-parchment disabled:opacity-20"
-                      >
-                        <ArrowDown className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
+                        <button onClick={() => setEditing(a.id)} className="flex min-w-0 flex-1 items-center gap-4 text-left">
+                          <div className="h-16 w-24 shrink-0 overflow-hidden rounded-md bg-dusk">
+                            {img && <img src={img} alt="" className="h-full w-full object-cover" />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs text-gold">
+                              {i === 0 && <span className="mr-2 rounded bg-gold/20 px-1.5 py-0.5 text-gold-bright">Front page</span>}
+                              {kind} · {categoryOf(a)?.en || a.category} · {a.date}
+                            </p>
+                            <p className="mt-1 truncate font-display text-xl font-semibold">
+                              {a.title || a.titleMn || <span className="italic text-mist">Untitled story</span>}
+                            </p>
+                            {!a.titleMn && a.title && <p className="text-xs text-mist">Mongolian version missing</p>}
+                          </div>
+                        </button>
+                        <div className="flex shrink-0 flex-col gap-1">
+                          <button
+                            onClick={() => move(i, -1)}
+                            disabled={i === 0}
+                            aria-label="Move up"
+                            className="rounded p-1.5 text-mist hover:bg-white/5 hover:text-parchment disabled:opacity-20"
+                          >
+                            <ArrowUp className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => move(i, 1)}
+                            disabled={i === articles.length - 1}
+                            aria-label="Move down"
+                            className="rounded p-1.5 text-mist hover:bg-white/5 hover:text-parchment disabled:opacity-20"
+                          >
+                            <ArrowDown className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </>
+            ) : (
+              <>
+                <div className="flex flex-wrap items-end justify-between gap-4">
+                  <div>
+                    <h1 className="font-display text-4xl font-semibold">Writers</h1>
+                    <p className="mt-1 text-sm text-mist">Each writer gets a page on the site listing their stories.</p>
+                  </div>
+                  <button
+                    onClick={addWriter}
+                    className="flex items-center gap-2 rounded-lg bg-gold-bright px-4 py-2.5 font-medium text-night hover:bg-[#f5e0a8]"
+                  >
+                    <Plus className="h-4 w-4" /> New writer
+                  </button>
+                </div>
+                {authors.length === 0 && (
+                  <p className="mt-16 text-center text-mist">
+                    No writers yet. Press “New writer” to add one, then choose them on a story.
+                  </p>
+                )}
+                <ul className="mt-8 grid gap-3 sm:grid-cols-2">
+                  {authors.map((w) => {
+                    const img = photos[`w:${w.id}`]?.preview || w.photo;
+                    const count = articles.filter((a) => a.authorId === w.id).length;
+                    return (
+                      <li key={w.id}>
+                        <button
+                          onClick={() => setEditingWriter(w.id)}
+                          className="flex w-full items-center gap-4 rounded-xl border border-white/[0.07] bg-white/[0.03] p-3 text-left transition hover:border-gold/30"
+                        >
+                          <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-full bg-dusk font-display text-xl text-gold-bright">
+                            {img ? <img src={img} alt="" className="h-full w-full object-cover" /> : (w.name || '?').charAt(0)}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate font-display text-xl font-semibold">
+                              {w.name || <span className="italic text-mist">Unnamed writer</span>}
+                            </p>
+                            <p className="truncate text-sm text-mist">
+                              {w.role || 'No title yet'} · {count} {count === 1 ? 'story' : 'stories'}
+                            </p>
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
           </>
         )}
       </main>
@@ -449,6 +600,7 @@ const inputCls =
 
 function Editor({
   article: a,
+  authors,
   photo,
   onChange,
   onPhoto,
@@ -456,6 +608,7 @@ function Editor({
   onDelete,
 }: {
   article: Article;
+  authors: Author[];
   photo?: PendingPhoto;
   onChange: (p: Partial<Article>) => void;
   onPhoto: (p: PendingPhoto | null) => void;
@@ -506,7 +659,20 @@ function Editor({
         </button>
       </div>
 
-      <div className="mt-6 grid gap-6 sm:grid-cols-3">
+      <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <Field label="Type">
+          <select
+            value={a.kind || 'news'}
+            onChange={(e) => onChange({ kind: e.target.value as StoryKind })}
+            className={inputCls}
+          >
+            {KINDS.map((k) => (
+              <option key={k.key} value={k.key} className="bg-dusk">
+                {k.en} / {k.mn}
+              </option>
+            ))}
+          </select>
+        </Field>
         <Field label="Section">
           <select value={categoryOf(a)?.key || 'DIPLOMACY'} onChange={(e) => setCategory(e.target.value)} className={inputCls}>
             {CATEGORIES.map((c) => (
@@ -524,14 +690,70 @@ function Editor({
             className={`${inputCls} [color-scheme:dark]`}
           />
         </Field>
-        <Field label="Writer" hint="optional">
-          <input
-            value={a.author || ''}
-            onChange={(e) => onChange({ author: e.target.value })}
-            placeholder="Dayan Melmiit"
+        <Field label="Writer">
+          <select
+            value={a.authorId || (a.author ? '__guest' : '')}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === '__guest') onChange({ authorId: undefined, author: a.author || ' ' });
+              else onChange({ authorId: v || undefined, author: undefined, authorMn: undefined });
+            }}
             className={inputCls}
-          />
+          >
+            <option value="" className="bg-dusk">
+              Dayan Melmiit (no name)
+            </option>
+            {authors.map((w) => (
+              <option key={w.id} value={w.id} className="bg-dusk">
+                {w.name || 'Unnamed writer'}
+              </option>
+            ))}
+            <option value="__guest" className="bg-dusk">
+              Guest writer…
+            </option>
+          </select>
         </Field>
+      </div>
+
+      {!a.authorId && a.author !== undefined && (
+        <div className="mt-4 max-w-md">
+          <Field label="Guest writer's name">
+            <input
+              value={a.author.trim() ? a.author : ''}
+              onChange={(e) => onChange({ author: e.target.value || ' ' })}
+              className={inputCls}
+              autoFocus
+            />
+          </Field>
+        </div>
+      )}
+
+      <div className="mt-6">
+        <span className="text-sm font-medium text-parchment/90">Countries</span>
+        <span className="ml-2 text-xs text-mist">the story appears on the map under each one you pick</span>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {PARTNERS.map((p) => {
+            const on = a.countries?.includes(p.code);
+            return (
+              <button
+                key={p.code}
+                type="button"
+                aria-pressed={on}
+                onClick={() => {
+                  const set = new Set(a.countries || []);
+                  if (on) set.delete(p.code);
+                  else set.add(p.code);
+                  onChange({ countries: [...set] });
+                }}
+                className={`rounded-full border px-3 py-1 text-[13px] transition-colors ${
+                  on ? 'border-gold-bright bg-gold-bright text-night' : 'border-white/15 text-parchment/75 hover:border-gold/50'
+                }`}
+              >
+                {p.en}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Photo */}
@@ -649,6 +871,134 @@ function Editor({
       <p className="mt-4 text-sm text-mist">
         Missing a Mongolian version? The site shows the English text instead until you add it.
       </p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Writer editor                                                       */
+/* ------------------------------------------------------------------ */
+
+function WriterEditor({
+  writer: w,
+  photo,
+  onChange,
+  onPhoto,
+  onDone,
+  onDelete,
+}: {
+  writer: Author;
+  photo?: PendingPhoto;
+  onChange: (p: Partial<Author>) => void;
+  onPhoto: (p: PendingPhoto | null) => void;
+  onDone: () => void;
+  onDelete: () => void;
+}) {
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState('');
+  const preview = photo?.preview || w.photo;
+
+  const takeFile = async (file?: File) => {
+    setError('');
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('That file is not a photo. Use a JPG, PNG or WebP image.');
+      return;
+    }
+    try {
+      const blob = await compressPhoto(file, true);
+      onPhoto({ preview: URL.createObjectURL(blob), file: blob, name: `writer-${w.name || 'photo'}` });
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  return (
+    <div className="max-w-3xl">
+      <div className="flex items-center justify-between gap-4">
+        <button onClick={onDone} className="flex items-center gap-2 text-sm text-mist hover:text-parchment">
+          <X className="h-4 w-4" /> Back to all writers
+        </button>
+        <button onClick={onDelete} className="flex items-center gap-2 text-sm text-[#f0a39c] hover:text-[#ffc2bc]">
+          <Trash2 className="h-4 w-4" /> Remove writer
+        </button>
+      </div>
+
+      <div className="mt-6 flex items-center gap-5">
+        <div className="grid h-28 w-28 shrink-0 place-items-center overflow-hidden rounded-full border border-gold/30 bg-dusk font-display text-4xl text-gold-bright">
+          {preview ? <img src={preview} alt="" className="h-full w-full object-cover" /> : (w.name || '?').charAt(0)}
+        </div>
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => fileInput.current?.click()}
+              className="rounded-lg border border-gold/40 px-4 py-2 text-sm hover:border-gold-bright hover:text-gold-bright"
+            >
+              {preview ? 'Replace photo' : 'Add photo'}
+            </button>
+            {preview && (
+              <button
+                type="button"
+                onClick={() => {
+                  onPhoto(null);
+                  onChange({ photo: undefined });
+                }}
+                className="rounded-lg px-4 py-2 text-sm text-mist hover:text-parchment"
+              >
+                Remove photo
+              </button>
+            )}
+          </div>
+          <p className="text-xs text-mist">A head-and-shoulders portrait works best. It is cropped to a circle.</p>
+          {photo && <p className="text-xs text-gold">New photo: uploads when you publish.</p>}
+          {error && <p className="text-xs text-[#f0a39c]">{error}</p>}
+          <input
+            ref={fileInput}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              takeFile(e.target.files?.[0]);
+              e.target.value = '';
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="mt-8 grid gap-8 sm:grid-cols-2">
+        {(['en', 'mn'] as const).map((lang) => {
+          const sfx = lang === 'mn' ? 'Mn' : '';
+          const k = (f: string) => `${f}${sfx}` as keyof Author;
+          return (
+            <section key={lang} className="space-y-4 rounded-xl border border-white/[0.07] p-4">
+              <h2 className="font-display text-2xl font-semibold">{lang === 'en' ? 'English' : 'Монгол'}</h2>
+              <Field label={lang === 'en' ? 'Name' : 'Нэр'}>
+                <input
+                  value={(w[k('name')] as string) || ''}
+                  onChange={(e) => onChange({ [k('name')]: e.target.value })}
+                  className={`${inputCls} font-display text-xl`}
+                />
+              </Field>
+              <Field label={lang === 'en' ? 'Title' : 'Албан тушаал'} hint={lang === 'en' ? 'e.g. Senior analyst, East Asia' : ''}>
+                <input
+                  value={(w[k('role')] as string) || ''}
+                  onChange={(e) => onChange({ [k('role')]: e.target.value })}
+                  className={inputCls}
+                />
+              </Field>
+              <Field label={lang === 'en' ? 'Short bio' : 'Товч намтар'} hint={lang === 'en' ? 'two or three sentences' : ''}>
+                <textarea
+                  rows={5}
+                  value={(w[k('bio')] as string) || ''}
+                  onChange={(e) => onChange({ [k('bio')]: e.target.value })}
+                  className={inputCls}
+                />
+              </Field>
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }

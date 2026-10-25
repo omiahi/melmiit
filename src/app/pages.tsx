@@ -1,11 +1,50 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion, useScroll, useSpring } from 'motion/react';
 import { Check, Link2, Share2 } from 'lucide-react';
-import { CATEGORIES, byline, categoryLabel, categoryOf, formatDate, readingMinutes, t, type Article } from './data';
+import {
+  CATEGORIES,
+  PARTNERS,
+  RELATION_LABEL,
+  authorOf,
+  byline,
+  categoryLabel,
+  categoryOf,
+  formatDate,
+  kindLabel,
+  readingMinutes,
+  t,
+  ta,
+  type Article,
+  type Author,
+} from './data';
 import { useSite } from './state';
 import { Hero } from './components/Hero';
 import { Photo, StoryCard, StoryLead, StoryLine } from './components/Stories';
+import { Brief } from './components/Brief';
+
+const WorldMap = lazy(() => import('./components/WorldMap'));
+
+function MapBlock({ heading = true }: { heading?: boolean }) {
+  return (
+    <Suspense fallback={<div className="min-h-[520px]" />}>
+      <WorldMap heading={heading} />
+    </Suspense>
+  );
+}
+
+function WriterPhoto({ w, className = '' }: { w: Author; className?: string }) {
+  return w.photo ? (
+    <img src={w.photo} alt="" className={`rounded-full object-cover ${className}`} />
+  ) : (
+    <span
+      aria-hidden
+      className={`grid place-items-center rounded-full border border-gold/40 font-display text-gold-bright ${className}`}
+    >
+      {w.name.charAt(0)}
+    </span>
+  );
+}
 
 function useTitle(title?: string) {
   useEffect(() => {
@@ -78,6 +117,10 @@ export function HomePage() {
               </div>
             )}
 
+            <div className="mt-28 border-t border-gold/15 pt-20">
+              <MapBlock />
+            </div>
+
             {more.length > 0 && (
               <section className="mt-24" aria-labelledby="more-heading">
                 <SectionHeading id="more-heading">{ui.more}</SectionHeading>
@@ -91,6 +134,7 @@ export function HomePage() {
           </>
         )}
       </div>
+      {lead && <Brief />}
     </>
   );
 }
@@ -119,6 +163,11 @@ export function SectionPage() {
         </h1>
         {status === 'ready' && <p className="mt-3 text-mist">{ui.stories(list.length)}</p>}
       </header>
+      {slug === 'mongolia' && (
+        <div className="mt-14 border-b border-gold/15 pb-20">
+          <MapBlock heading={false} />
+        </div>
+      )}
       <div className="mt-14">
         {status === 'loading' && <Loading />}
         {status === 'error' && <StatusMessage>{ui.loadError}</StatusMessage>}
@@ -184,8 +233,9 @@ function ShareButton({ title }: { title: string }) {
 
 export function ArticlePage() {
   const { id } = useParams();
-  const { articles, status, lang, ui } = useSite();
+  const { articles, authors, status, lang, ui } = useSite();
   const a = articles.find((x) => x.id === id);
+  const writer = a ? authorOf(a, authors) : undefined;
   const title = a ? t(a, 'title', lang) : undefined;
   useTitle(title);
 
@@ -194,9 +244,15 @@ export function ArticlePage() {
 
   const related = useMemo(() => {
     if (!a) return [];
-    const same = articles.filter((x) => x.id !== a.id && x.category === a.category);
-    const others = articles.filter((x) => x.id !== a.id && x.category !== a.category);
-    return [...same, ...others].slice(0, 3);
+    // most shared countries first, then same section, then the rest
+    const score = (x: Article) =>
+      (x.countries || []).filter((c) => a.countries?.includes(c)).length * 2 + (x.category === a.category ? 1 : 0);
+    return articles
+      .filter((x) => x.id !== a.id)
+      .map((x, i) => ({ x, s: score(x), i }))
+      .sort((p, q) => q.s - p.s || p.i - q.i)
+      .slice(0, 3)
+      .map((r) => r.x);
   }, [a, articles]);
 
   if (status === 'loading') return <div className="pt-32"><Loading /></div>;
@@ -215,13 +271,18 @@ export function ArticlePage() {
       />
       <article className="pb-24 pt-28 sm:pt-36">
         <header className="mx-auto max-w-[920px] px-4 sm:px-6">
-          {cat ? (
-            <Link to={`/section/${cat.slug}`} className="text-sm font-medium text-gold hover:text-gold-bright">
-              {cat[lang]}
-            </Link>
-          ) : (
-            <p className="text-sm font-medium text-gold">{categoryLabel(a, lang)}</p>
-          )}
+          <p className="text-sm font-medium">
+            {kindLabel(a, lang) && (
+              <span className="mr-2 font-display text-[1.15em] italic text-parchment/90">{kindLabel(a, lang)}</span>
+            )}
+            {cat ? (
+              <Link to={`/section/${cat.slug}`} className="text-gold hover:text-gold-bright">
+                {cat[lang]}
+              </Link>
+            ) : (
+              <span className="text-gold">{categoryLabel(a, lang)}</span>
+            )}
+          </p>
           <motion.h1
             key={lang}
             initial={{ opacity: 0, y: 16 }}
@@ -238,7 +299,13 @@ export function ArticlePage() {
           )}
           <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-y border-white/[0.08] py-4">
             <p className="text-sm text-mist">
-              <span className="text-parchment/85">{byline(a, lang)}</span>
+              {writer ? (
+                <Link to={`/author/${writer.id}`} className="text-parchment/85 hover:text-gold-bright">
+                  {byline(a, lang, authors)}
+                </Link>
+              ) : (
+                <span className="text-parchment/85">{byline(a, lang, authors)}</span>
+              )}
               <span className="mx-2 text-gold/60" aria-hidden>
                 /
               </span>
@@ -277,7 +344,40 @@ export function ArticlePage() {
         <div className="mx-auto mt-12 flex max-w-[66ch] justify-center px-4" aria-hidden>
           <img src="/brand/logo-240.webp" alt="" className="w-14 opacity-50" />
         </div>
+
+        {(a.countries?.length ?? 0) > 0 && (
+          <div className="mx-auto mt-10 flex max-w-[66ch] flex-wrap justify-center gap-2 px-4">
+            {PARTNERS.filter((p) => a.countries!.includes(p.code)).map((p) => (
+              <Link
+                key={p.code}
+                to={`/country/${p.code.toLowerCase()}`}
+                className="rounded-full border border-gold/30 px-3 py-1 text-[13px] text-parchment/75 hover:border-gold-bright hover:text-gold-bright"
+              >
+                {p[lang]}
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {writer && (
+          <aside
+            aria-label={ui.aboutWriter}
+            className="mx-auto mt-14 flex max-w-[66ch] gap-5 border-t border-gold/20 px-4 pt-8 sm:px-6"
+          >
+            <WriterPhoto w={writer} className="h-16 w-16 shrink-0 text-2xl" />
+            <div>
+              <p className="text-sm text-gold">{ui.aboutWriter}</p>
+              <Link to={`/author/${writer.id}`} className="font-display text-2xl font-semibold text-parchment hover:text-gold-bright">
+                {ta(writer, 'name', lang)}
+              </Link>
+              {ta(writer, 'role', lang) && <p className="text-sm text-mist">{ta(writer, 'role', lang)}</p>}
+              {ta(writer, 'bio', lang) && <p className="mt-2 text-parchment/75">{ta(writer, 'bio', lang)}</p>}
+            </div>
+          </aside>
+        )}
       </article>
+
+      <Brief compact />
 
       {related.length > 0 && (
         <section className="mx-auto max-w-[1240px] px-4 pb-24 sm:px-6" aria-labelledby="related-heading">
@@ -290,6 +390,91 @@ export function ArticlePage() {
         </section>
       )}
     </>
+  );
+}
+
+/* ---------- Country page ---------- */
+
+export function CountryPage() {
+  const { code } = useParams();
+  const { articles, status, lang, ui } = useSite();
+  const p = PARTNERS.find((x) => x.code.toLowerCase() === code);
+  const list = useMemo(() => articles.filter((a) => p && a.countries?.includes(p.code)), [articles, p]);
+  useTitle(p?.[lang]);
+
+  if (!p) return <NotFoundPage />;
+  return (
+    <div className="mx-auto max-w-[1240px] px-4 pb-24 pt-32 sm:px-6">
+      <header>
+        <Link to="/section/mongolia" className="text-sm text-gold hover:text-gold-bright">
+          {ui.mapTitle}
+        </Link>
+        <h1 className="mt-3 font-display text-[clamp(3rem,8vw,6rem)] font-semibold leading-none text-parchment">
+          {p[lang]}
+        </h1>
+        <p className="mt-3 text-mist">
+          {RELATION_LABEL[p.relation][lang]}
+          {status === 'ready' && (
+            <>
+              <span className="mx-2 text-gold/60" aria-hidden>
+                /
+              </span>
+              {ui.stories(list.length)}
+            </>
+          )}
+        </p>
+      </header>
+      <div className="mt-14">
+        {status === 'loading' && <Loading />}
+        {status === 'ready' && list.length === 0 && <StatusMessage>{ui.mapNoStories(p[lang])}</StatusMessage>}
+        {list[0] && <StoryLead a={list[0]} />}
+        {list.length > 1 && (
+          <div className="mt-20 grid gap-12 sm:grid-cols-2 lg:grid-cols-3">
+            {list.slice(1).map((a) => (
+              <StoryCard key={a.id} a={a} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Writer page ---------- */
+
+export function AuthorPage() {
+  const { id } = useParams();
+  const { articles, authors, status, lang, ui } = useSite();
+  const w = authors.find((x) => x.id === id);
+  const list = useMemo(() => articles.filter((a) => a.authorId === id), [articles, id]);
+  useTitle(w ? ta(w, 'name', lang) : undefined);
+
+  if (status === 'loading') return <div className="pt-32"><Loading /></div>;
+  if (!w) return <NotFoundPage />;
+  return (
+    <div className="mx-auto max-w-[1240px] px-4 pb-24 pt-32 sm:px-6">
+      <header className="flex flex-col gap-8 sm:flex-row sm:items-center">
+        <WriterPhoto w={w} className="h-32 w-32 shrink-0 text-5xl sm:h-40 sm:w-40" />
+        <div>
+          <p className="text-sm text-gold">{ui.writer}</p>
+          <h1 className="mt-1 font-display text-[clamp(2.6rem,6vw,4.5rem)] font-semibold leading-none text-parchment">
+            {ta(w, 'name', lang)}
+          </h1>
+          {ta(w, 'role', lang) && <p className="mt-2 text-lg text-parchment/70">{ta(w, 'role', lang)}</p>}
+          {ta(w, 'bio', lang) && <p className="mt-4 max-w-[60ch] leading-relaxed text-parchment/80">{ta(w, 'bio', lang)}</p>}
+        </div>
+      </header>
+      {list.length > 0 && (
+        <section className="mt-20" aria-labelledby="writer-stories">
+          <SectionHeading id="writer-stories">{ui.byWriter}</SectionHeading>
+          <div className="mt-10 grid gap-12 sm:grid-cols-2 lg:grid-cols-3">
+            {list.map((a) => (
+              <StoryCard key={a.id} a={a} />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
   );
 }
 
