@@ -3,15 +3,12 @@
 @source './admin/**/*.{ts,tsx}';
 
 @theme {
-  --color-night: #060912;
-  --color-dusk: #0e1a33;
-  --color-tengri: #2a5aa0;
-  --color-gold: #c9a45c;
-  --color-gold-bright: #ecd28f;
-  --color-parchment: #ece4d3;
-  --color-mist: #a8a291;
-  --color-flame: #c8413a;
-  --color-jade: #3e8e6e;
+  --color-night: #070605;
+  --color-dusk: #12100c;
+  --color-gold: #b8975a;
+  --color-gold-bright: #d9bf86;
+  --color-parchment: #ece6d8;
+  --color-mist: #8f887a;
 
   --font-display: 'Cormorant Garamond', 'Times New Roman', serif;
   --font-sans: 'Golos Text', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -66,7 +63,7 @@ body {
   position: relative;
   overflow: hidden;
   border-radius: 3px;
-  background: linear-gradient(140deg, #13213f, #0a1022);
+  background: linear-gradient(140deg, #17140f, #0c0a08);
 }
 .frame::after {
   content: '';
@@ -103,40 +100,6 @@ body {
   color: var(--color-gold-bright);
 }
 
-@keyframes spin-slow {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@keyframes breathe {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.85;
-    transform: scale(1.04);
-  }
-}
-@keyframes ring-out {
-  from {
-    opacity: 0.9;
-    transform: translate(-50%, -50%) scale(0.35);
-  }
-  to {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(1.6);
-  }
-}
-@keyframes scroll-cue {
-  0% {
-    transform: translateY(-100%);
-  }
-  100% {
-    transform: translateY(200%);
-  }
-}
 
 @media (prefers-reduced-motion: reduce) {
   *,

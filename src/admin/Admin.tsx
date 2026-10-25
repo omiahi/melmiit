@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ImagePlus, Loader2, LogOut, Plus, Trash2, X } from 'lucide-react';
-import { CATEGORIES, type Article } from '../app/data';
+import { CATEGORIES, categoryOf, type Article } from '../app/data';
 
 /* ------------------------------------------------------------------ */
 /* Types & helpers                                                     */
@@ -136,7 +136,7 @@ function Login({ onSuccess }: { onSuccess: (pw: string) => void }) {
   };
 
   return (
-    <div className="grid min-h-screen place-items-center bg-[radial-gradient(90%_70%_at_50%_100%,#16305e,#060912_70%)] px-4">
+    <div className="grid min-h-screen place-items-center bg-[radial-gradient(70%_50%_at_50%_45%,rgba(184,151,90,0.12),#070605_70%)] px-4">
       <form onSubmit={submit} className="w-full max-w-sm text-center">
         <img src="/brand/logo-700.webp" alt="Dayan Melmiit" className="mx-auto w-56" />
         <h1 className="mt-6 font-display text-3xl font-semibold">Newsroom</h1>
@@ -218,7 +218,7 @@ function Manager({ password, onLogout }: { password: string; onLogout: () => voi
   const addNew = () => {
     const taken = new Set(articles!.map((a) => a.id));
     const id = uniqueId(`new-${today()}`, taken);
-    const a: Article = { id, category: 'WORLD', title: '', date: today() };
+    const a: Article = { id, category: 'DIPLOMACY', categoryMn: 'ДИПЛОМАТ', title: '', date: today() };
     setArticles([a, ...articles!]);
     setEditing(id);
   };
@@ -367,7 +367,7 @@ function Manager({ password, onLogout }: { password: string; onLogout: () => voi
                       <div className="min-w-0">
                         <p className="text-xs text-gold">
                           {i === 0 && <span className="mr-2 rounded bg-gold/20 px-1.5 py-0.5 text-gold-bright">Front page</span>}
-                          {CATEGORIES.find((c) => c.key === a.category)?.en || a.category} · {a.date}
+                          {categoryOf(a)?.en || a.category} · {a.date}
                         </p>
                         <p className="mt-1 truncate font-display text-xl font-semibold">
                           {a.title || a.titleMn || <span className="italic text-mist">Untitled story</span>}
@@ -508,7 +508,7 @@ function Editor({
 
       <div className="mt-6 grid gap-6 sm:grid-cols-3">
         <Field label="Section">
-          <select value={a.category} onChange={(e) => setCategory(e.target.value)} className={inputCls}>
+          <select value={categoryOf(a)?.key || 'DIPLOMACY'} onChange={(e) => setCategory(e.target.value)} className={inputCls}>
             {CATEGORIES.map((c) => (
               <option key={c.key} value={c.key} className="bg-dusk">
                 {c.en} / {c.mn}

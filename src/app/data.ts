@@ -3,7 +3,7 @@ export type Lang = 'en' | 'mn';
 /** One article as stored in public/articles.json (edited from /admin). */
 export interface Article {
   id: string;
-  category: string; // e.g. "WORLD"
+  category: string; // e.g. "DIPLOMACY"
   categoryMn?: string;
   title: string;
   titleMn?: string;
@@ -19,18 +19,28 @@ export interface Article {
 }
 
 export const CATEGORIES = [
-  { slug: 'world', key: 'WORLD', en: 'World', mn: 'Дэлхий' },
-  { slug: 'politics', key: 'POLITICS', en: 'Politics', mn: 'Улс төр' },
-  { slug: 'business', key: 'BUSINESS', en: 'Business', mn: 'Бизнес' },
-  { slug: 'international', key: 'INTERNATIONAL', en: 'International', mn: 'Олон улс' },
+  { slug: 'diplomacy', key: 'DIPLOMACY', en: 'Diplomacy', mn: 'Дипломат' },
+  { slug: 'geopolitics', key: 'GEOPOLITICS', en: 'Geopolitics', mn: 'Геополитик' },
+  { slug: 'security', key: 'SECURITY', en: 'Security', mn: 'Аюулгүй байдал' },
+  { slug: 'economy', key: 'ECONOMY', en: 'Economy & trade', mn: 'Эдийн засаг, худалдаа' },
+  { slug: 'mongolia', key: 'MONGOLIA', en: 'Mongolia & the world', mn: 'Монгол ба дэлхий' },
   { slug: 'culture', key: 'CULTURE', en: 'Culture', mn: 'Соёл' },
-  { slug: 'technology', key: 'TECHNOLOGY', en: 'Technology', mn: 'Технологи' },
 ] as const;
+
+/** Section names used before the international-relations sections; kept so old stories still file correctly. */
+const LEGACY: Record<string, string> = {
+  INTERNATIONAL: 'DIPLOMACY',
+  WORLD: 'GEOPOLITICS',
+  POLITICS: 'GEOPOLITICS',
+  BUSINESS: 'ECONOMY',
+  TECHNOLOGY: 'SECURITY',
+};
 
 export type Category = (typeof CATEGORIES)[number];
 
 export function categoryOf(a: Article): Category | undefined {
-  return CATEGORIES.find((c) => c.key === a.category?.toUpperCase());
+  const key = a.category?.toUpperCase() ?? '';
+  return CATEGORIES.find((c) => c.key === (LEGACY[key] || key));
 }
 
 export function categoryLabel(a: Article, lang: Lang) {
@@ -77,11 +87,10 @@ export async function loadArticles(): Promise<Article[]> {
 
 export const UI = {
   en: {
-    tagline: 'International journalism',
-    ring: 'DAYAN MELMIIT · INTERNATIONAL JOURNALISM · ',
-    latest: 'Latest',
+    tagline: 'Diplomacy, geopolitics and international affairs',
+    latest: 'Latest dispatches',
     more: 'More stories',
-    readStory: 'Read the story',
+    readStory: 'Read the analysis',
     search: 'Search',
     searchPlaceholder: 'Search stories',
     noResults: 'No stories match that search.',
@@ -98,13 +107,11 @@ export const UI = {
     copied: 'Link copied',
     share: 'Share',
     loadError: 'Stories could not load. Check your connection and refresh the page.',
-    tapLogo: 'Tap the emblem',
     scroll: 'Scroll',
     contentSoon: 'The full text of this story is on its way.',
   },
   mn: {
-    tagline: 'Олон улсын сэтгүүл зүй',
-    ring: 'DAYAN MELMIIT · ОЛОН УЛСЫН СЭТГҮҮЛ ЗҮЙ · ',
+    tagline: 'Дипломат, геополитик, олон улсын харилцаа',
     latest: 'Шинэ мэдээ',
     more: 'Бусад мэдээ',
     readStory: 'Унших',
@@ -124,7 +131,6 @@ export const UI = {
     copied: 'Хуулагдлаа',
     share: 'Хуваалцах',
     loadError: 'Мэдээ ачаалагдсангүй. Интернэтээ шалгаад хуудсаа дахин ачаална уу.',
-    tapLogo: 'Тэмдэг дээр дар',
     scroll: 'Доош',
     contentSoon: 'Энэ нийтлэлийн бүрэн эх удахгүй нэмэгдэнэ.',
   },

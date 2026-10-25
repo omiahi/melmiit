@@ -4,7 +4,7 @@
 
 1. Go to **melmiit.com/admin** and sign in with the admin password.
 2. Press **New story**.
-3. Pick the **section** (World, Politics, Business, International, Culture, Technology). The date fills in with today.
+3. Pick the **section** (Diplomacy, Geopolitics, Security, Economy & trade, Mongolia & the world, Culture). The date fills in with today.
 4. Add a **photo**: press *Choose photo* or drag one into the box. It is resized for you. Landscape photos look best.
 5. Fill in the **English** side: headline, a one- or two-sentence summary, and the story. Leave a blank line between paragraphs.
 6. Fill in the **Монгол** side the same way. If you skip it, the Mongolian site shows the English text until you add it.

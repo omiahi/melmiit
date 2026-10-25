@@ -1,8 +1,8 @@
 [
   {
     "id": "climate-summit-geneva",
-    "category": "INTERNATIONAL",
-    "categoryMn": "ОЛОН УЛСЫН",
+    "category": "DIPLOMACY",
+    "categoryMn": "ДИПЛОМАТ",
     "title": "Global Leaders Convene for Historic Climate Summit in Geneva",
     "titleMn": "Дэлхийн удирдагчид Женев хотод түүхэн уур амьсгалын дээд хэмжээний уулзалтад цугларлаа",
     "excerpt": "World leaders gather to address unprecedented environmental challenges and forge new international agreements on sustainable development.",
@@ -15,8 +15,8 @@
   },
   {
     "id": "asian-economic-partnership",
-    "category": "POLITICS",
-    "categoryMn": "УЛСТӨР",
+    "category": "ECONOMY",
+    "categoryMn": "ЭДИЙН ЗАСАГ, ХУДАЛДАА",
     "title": "New Economic Partnership Announced Between Asian Markets",
     "titleMn": "Азийн зах зээлүүдийн хооронд шинэ эдийн засгийн түншлэлийг зарлалаа",
     "excerpt": "A groundbreaking trade agreement promises to reshape economic relations across the continent.",
@@ -43,8 +43,8 @@
   },
   {
     "id": "technology-sector-growth",
-    "category": "BUSINESS",
-    "categoryMn": "БИЗНЕС",
+    "category": "ECONOMY",
+    "categoryMn": "ЭДИЙН ЗАСАГ, ХУДАЛДАА",
     "title": "Technology Sector Shows Unprecedented Growth in Q4",
     "titleMn": "Технологийн салбар дөрөвдүгээр улиралд дээд амжилт үзүүллээ",
     "excerpt": "Innovation and investment drive record-breaking performance across global markets.",
@@ -57,8 +57,8 @@
   },
   {
     "id": "space-agency-mars-mission",
-    "category": "WORLD",
-    "categoryMn": "ДЭЛХИЙ",
+    "category": "GEOPOLITICS",
+    "categoryMn": "ГЕОПОЛИТИК",
     "title": "International Space Agency Announces Mars Mission Timeline",
     "titleMn": "Олон улсын сансрын агентлаг Ангараг руу нислэгийн төлөвлөгөөг зарлав",
     "excerpt": "Ambitious plan outlines human exploration of the Red Planet by 2035.",
@@ -73,8 +73,8 @@
   },
   {
     "id": "g20-digital-currency",
-    "category": "POLITICS",
-    "categoryMn": "УЛСТӨР",
+    "category": "DIPLOMACY",
+    "categoryMn": "ДИПЛОМАТ",
     "title": "G20 Summit Focuses on Digital Currency Regulation",
     "titleMn": "G20 дээд хэмжээний уулзалт дижитал валютын зохицуулалтад анхаарлаа хандуулав",
     "excerpt": "Major economies work toward unified framework for cryptocurrency oversight.",

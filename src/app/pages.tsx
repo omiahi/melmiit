@@ -9,7 +9,7 @@ import { Photo, StoryCard, StoryLead, StoryLine } from './components/Stories';
 
 function useTitle(title?: string) {
   useEffect(() => {
-    document.title = title ? `${title} — Dayan Melmiit` : 'Dayan Melmiit — International journalism';
+    document.title = title ? `${title} — Dayan Melmiit` : 'Dayan Melmiit — Diplomacy, geopolitics and international affairs';
   }, [title]);
 }
 
@@ -29,7 +29,10 @@ function SectionHeading({ children, id }: { children: React.ReactNode; id?: stri
   return (
     <h2 id={id} className="flex items-center gap-4 font-display text-[1.7rem] font-semibold text-parchment">
       {children}
-      <span aria-hidden className="h-px flex-1 bg-gradient-to-r from-gold/50 to-transparent" />
+      <span aria-hidden className="flex flex-1 items-center gap-2">
+        <span className="h-1.5 w-1.5 rotate-45 border border-gold/80" />
+        <span className="h-px flex-1 bg-gradient-to-r from-gold/45 to-transparent" />
+      </span>
     </h2>
   );
 }

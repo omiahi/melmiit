@@ -3,6 +3,7 @@ import { BrowserRouter, Link, Route, Routes, useLocation } from 'react-router-do
 import { CATEGORIES } from './data';
 import { SiteProvider, useSite } from './state';
 import { Header } from './components/Header';
+import { Herd } from './components/Herd';
 import { ArticlePage, HomePage, NotFoundPage, SectionPage } from './pages';
 
 function ScrollToTop() {
@@ -16,14 +17,15 @@ function ScrollToTop() {
 function Footer() {
   const { lang, ui } = useSite();
   return (
-    <footer className="relative overflow-hidden border-t border-gold/15 bg-[radial-gradient(80%_120%_at_50%_0%,#0e1a33_0%,#060912_70%)]">
-      <div className="mx-auto flex max-w-[1240px] flex-col items-center px-4 py-16 text-center sm:px-6">
+    <footer className="relative overflow-hidden border-t border-gold/15 bg-[radial-gradient(70%_100%_at_50%_0%,rgba(184,151,90,0.08)_0%,#070605_70%)]">
+      <Herd compact className="h-14 w-full opacity-55 sm:h-16" />
+      <div className="mx-auto flex max-w-[1240px] flex-col items-center px-4 pb-16 pt-6 text-center sm:px-6">
         <Link to="/" aria-label="Dayan Melmiit — home" className="group">
           <img
             src="/brand/logo-700.webp"
             alt="Dayan Melmiit"
             loading="lazy"
-            className="w-48 transition-[filter,transform] duration-700 group-hover:scale-[1.03] group-hover:[filter:drop-shadow(0_0_24px_rgba(236,210,143,0.45))]"
+            className="w-44 opacity-90 transition-opacity duration-500 group-hover:opacity-100"
           />
         </Link>
         <p className="mt-4 font-display text-xl italic text-parchment/75">{ui.tagline}</p>
