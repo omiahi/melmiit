@@ -20,7 +20,8 @@ import {
 } from './data';
 import { useSite } from './state';
 import { Hero } from './components/Hero';
-import { Photo, StoryCard, StoryCinema, StoryDispatch, StoryLead } from './components/Stories';
+import { Photo, StoryCard, StoryLead } from './components/Stories';
+import { Relay } from './components/Relay';
 import { Brief } from './components/Brief';
 
 const WorldMap = lazy(() => import('./components/WorldMap'));
@@ -81,50 +82,36 @@ function SectionHeading({ children, id }: { children: React.ReactNode; id?: stri
 export function HomePage() {
   const { articles, status, ui } = useSite();
   useTitle();
-  const [lead, ...rest] = articles;
-  const dispatches = rest.slice(0, 5);
-  const more = rest.slice(5);
+  const relay = articles.slice(0, 8);
+  const more = articles.slice(8);
 
   return (
     <>
       <Hero />
-      <div id="stories" className="mx-auto max-w-[1240px] scroll-mt-20 px-4 pb-24 pt-16 sm:px-6 md:pt-24">
+      <div id="stories" className="scroll-mt-16">
         {status === 'loading' && <Loading />}
         {status === 'error' && <StatusMessage>{ui.loadError}</StatusMessage>}
-        {status === 'ready' && !lead && <StatusMessage>{ui.empty}</StatusMessage>}
-        {lead && (
-          <>
-            <StoryCinema a={lead} />
-
-            {dispatches.length > 0 && (
-              <section className="mx-auto mt-24 max-w-[1080px]" aria-labelledby="latest-heading">
-                <SectionHeading id="latest-heading">{ui.latest}</SectionHeading>
-                <div className="mt-8 border-b border-gold/15">
-                  {dispatches.map((a) => (
-                    <StoryDispatch key={a.id} a={a} />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            <div className="mt-28 border-t border-gold/15 pt-20">
-              <MapBlock />
-            </div>
-
-            {more.length > 0 && (
-              <section className="mt-24" aria-labelledby="more-heading">
-                <SectionHeading id="more-heading">{ui.more}</SectionHeading>
-                <div className="mt-10 grid gap-12 sm:grid-cols-2 lg:grid-cols-3">
-                  {more.map((a) => (
-                    <StoryCard key={a.id} a={a} />
-                  ))}
-                </div>
-              </section>
-            )}
-          </>
-        )}
+        {status === 'ready' && articles.length === 0 && <StatusMessage>{ui.empty}</StatusMessage>}
+        {relay.length > 0 && <Relay articles={relay} />}
       </div>
-      {lead && <Brief />}
+      {articles.length > 0 && (
+        <div className="mx-auto max-w-[1240px] px-4 pb-24 sm:px-6">
+          <div className="mt-16 border-t border-gold/15 pt-20">
+            <MapBlock />
+          </div>
+          {more.length > 0 && (
+            <section className="mt-24" aria-labelledby="more-heading">
+              <SectionHeading id="more-heading">{ui.more}</SectionHeading>
+              <div className="mt-10 grid gap-12 sm:grid-cols-2 lg:grid-cols-3">
+                {more.map((a) => (
+                  <StoryCard key={a.id} a={a} />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
+      {articles.length > 0 && <Brief />}
     </>
   );
 }

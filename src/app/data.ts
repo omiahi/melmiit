@@ -218,6 +218,13 @@ export const UI = {
     aboutWriter: 'About the writer',
     byWriter: 'Stories',
     // newsletter
+    relayTitle: 'The relay',
+    relayLede:
+      'In the thirteenth century, the Mongol Örtöö carried dispatches across Eurasia, rider to rider, station to station. Ours carries the news to you.',
+    relayHint: 'Scroll to ride',
+    station: (n: string) => `Station ${n}`,
+    relayEnd: 'You have reached the last station. The map shows where these stories lead.',
+    relayMap: 'Open the map',
     briefTitle: 'The Brief',
     briefLede: 'The week in diplomacy and geopolitics, in one email.',
     briefPlaceholder: 'Your email address',
@@ -258,6 +265,13 @@ export const UI = {
     writer: 'Нийтлэлч',
     aboutWriter: 'Нийтлэлчийн тухай',
     byWriter: 'Нийтлэлүүд',
+    relayTitle: 'Өртөө',
+    relayLede:
+      'XIII зуунд Монголын өртөө Евразийг дамнан морьтой элчээр, өртөөнөөс өртөөнд мэдээ дамжуулдаг байв. Бидний өртөө мэдээг танд хүргэнэ.',
+    relayHint: 'Доош гүйлгэнэ үү',
+    station: (n: string) => `Өртөө ${n}`,
+    relayEnd: 'Сүүлчийн өртөөнд ирлээ. Эдгээр нийтлэл хаашаа хөтөлж байгааг газрын зургаас харна уу.',
+    relayMap: 'Газрын зураг нээх',
     briefTitle: 'Товч тойм',
     briefLede: 'Долоо хоногийн дипломат, геополитикийн гол мэдээ нэг имэйлээр.',
     briefPlaceholder: 'Имэйл хаяг',
