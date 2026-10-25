@@ -21,7 +21,7 @@ import {
 import { useSite } from './state';
 import { Hero } from './components/Hero';
 import { Photo, StoryCard, StoryLead } from './components/Stories';
-import { Relay } from './components/Relay';
+import { Toono } from './components/Toono';
 import { Brief } from './components/Brief';
 
 const WorldMap = lazy(() => import('./components/WorldMap'));
@@ -82,8 +82,8 @@ function SectionHeading({ children, id }: { children: React.ReactNode; id?: stri
 export function HomePage() {
   const { articles, status, ui } = useSite();
   useTitle();
-  const relay = articles.slice(0, 8);
-  const more = articles.slice(8);
+  const crown = articles.slice(0, 7);
+  const more = articles.slice(7);
 
   return (
     <>
@@ -92,7 +92,7 @@ export function HomePage() {
         {status === 'loading' && <Loading />}
         {status === 'error' && <StatusMessage>{ui.loadError}</StatusMessage>}
         {status === 'ready' && articles.length === 0 && <StatusMessage>{ui.empty}</StatusMessage>}
-        {relay.length > 0 && <Relay articles={relay} />}
+        {crown.length > 0 && <Toono articles={crown} />}
       </div>
       {articles.length > 0 && (
         <div className="mx-auto max-w-[1240px] px-4 pb-24 sm:px-6">
