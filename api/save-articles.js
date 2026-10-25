@@ -1,107 +1,87 @@
 /**
- * Vercel Serverless Function: Save Articles to GitHub
+ * Publishes the articles (and any newly uploaded photos) as a single commit on GitHub.
+ * Vercel sees the commit and redeploys the site, usually within a minute.
  *
- * This endpoint:
- * 1. Receives updated articles JSON from the admin panel
- * 2. Validates the admin password
- * 3. Commits the changes to GitHub using the GitHub REST API
- * 4. Triggers a Vercel rebuild automatically
- *
- * Required environment variables in Vercel:
- * - ADMIN_PASSWORD: Password for admin access
- * - GITHUB_TOKEN: Personal Access Token with repo permissions
- * - GITHUB_REPO: Repository in format "owner/repo" (e.g., "omiahi/melmiit")
+ * Environment variables (Vercel → Project → Settings → Environment Variables):
+ *   ADMIN_PASSWORD  password for melmiit.com/admin
+ *   GITHUB_TOKEN    GitHub token with "Contents: Read and write" on the repository
+ *   GITHUB_REPO     optional, defaults to "omiahi/melmiit"
+ *   GITHUB_BRANCH   optional, defaults to "main"
  */
+import { ARTICLES_PATH, BRANCH, gh, requirePassword } from './_lib.js';
+
+const UPLOAD_PATH = /^public\/uploads\/[a-z0-9-]+\.(jpg|webp|png)$/;
+const TEXT_FIELDS = [
+  'id', 'category', 'categoryMn', 'title', 'titleMn', 'date', 'dateMn', 'image',
+  'excerpt', 'excerptMn', 'content', 'contentMn', 'author', 'authorMn',
+];
+
+function clean(article) {
+  const out = {};
+  for (const key of TEXT_FIELDS) {
+    const v = article?.[key];
+    if (typeof v === 'string' && v.trim() !== '') out[key] = v.trim();
+  }
+  return out;
+}
 
 export default async function handler(req, res) {
-  // Only allow POST requests
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (!(await requirePassword(req, res))) return;
+
+  const { articles, files = [] } = req.body || {};
+  if (!Array.isArray(articles)) return res.status(400).json({ error: 'No articles were sent.' });
+
+  const list = articles.map(clean);
+  const ids = new Set();
+  for (const a of list) {
+    if (!a.id || !/^[a-z0-9-]+$/i.test(a.id)) {
+      return res.status(400).json({ error: `Article "${a.title || a.titleMn || '?'}" has an invalid ID.` });
+    }
+    if (ids.has(a.id)) return res.status(400).json({ error: `Two articles share the ID "${a.id}".` });
+    ids.add(a.id);
+    if (!a.title && !a.titleMn) return res.status(400).json({ error: 'Every article needs a title.' });
   }
-
-  const { password, articles } = req.body;
-
-  // Validate password
-  if (password !== process.env.ADMIN_PASSWORD) {
-    return res.status(401).json({ error: 'Invalid password' });
-  }
-
-  // Validate articles data
-  if (!Array.isArray(articles)) {
-    return res.status(400).json({ error: 'Invalid articles data' });
-  }
-
-  // Get GitHub credentials from environment
-  const githubToken = process.env.GITHUB_TOKEN;
-  const githubRepo = process.env.GITHUB_REPO || 'omiahi/melmiit';
-
-  if (!githubToken) {
-    return res.status(500).json({ error: 'GitHub token not configured' });
+  for (const f of files) {
+    if (!UPLOAD_PATH.test(f?.path || '') || !/^[0-9a-f]{40}$/.test(f?.sha || '')) {
+      return res.status(400).json({ error: 'A photo upload was not recognized. Upload it again.' });
+    }
   }
 
   try {
-    // Step 1: Get current file SHA (required for updating)
-    const filePathInRepo = 'public/articles.json';
-    const getFileUrl = `https://api.github.com/repos/${githubRepo}/contents/${filePathInRepo}`;
-
-    const getResponse = await fetch(getFileUrl, {
-      headers: {
-        'Authorization': `token ${githubToken}`,
-        'Accept': 'application/vnd.github.v3+json',
-      },
+    const ref = await gh(`/git/ref/heads/${BRANCH}`);
+    const parent = await gh(`/git/commits/${ref.object.sha}`);
+    const articlesBlob = await gh('/git/blobs', {
+      method: 'POST',
+      body: JSON.stringify({ content: JSON.stringify(list, null, 2) + '\n', encoding: 'utf-8' }),
     });
-
-    let sha = null;
-    if (getResponse.ok) {
-      const fileData = await getResponse.json();
-      sha = fileData.sha;
-    }
-
-    // Step 2: Prepare new content (base64 encoded)
-    const content = JSON.stringify(articles, null, 2);
-    const contentBase64 = Buffer.from(content).toString('base64');
-
-    // Step 3: Commit the file to GitHub
-    const commitUrl = `https://api.github.com/repos/${githubRepo}/contents/${filePathInRepo}`;
-    const commitPayload = {
-      message: 'Update articles from admin panel',
-      content: contentBase64,
-      branch: 'main',
-    };
-
-    // Include SHA if file exists (update), otherwise it's a new file (create)
-    if (sha) {
-      commitPayload.sha = sha;
-    }
-
-    const commitResponse = await fetch(commitUrl, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `token ${githubToken}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(commitPayload),
+    const tree = await gh('/git/trees', {
+      method: 'POST',
+      body: JSON.stringify({
+        base_tree: parent.tree.sha,
+        tree: [
+          { path: ARTICLES_PATH, mode: '100644', type: 'blob', sha: articlesBlob.sha },
+          ...files.map((f) => ({ path: f.path, mode: '100644', type: 'blob', sha: f.sha })),
+        ],
+      }),
     });
-
-    if (!commitResponse.ok) {
-      const errorData = await commitResponse.json();
-      throw new Error(errorData.message || 'Failed to commit to GitHub');
-    }
-
-    const commitData = await commitResponse.json();
-
-    // Success! Vercel will auto-redeploy on git push
-    return res.status(200).json({
-      success: true,
-      message: 'Articles saved successfully',
-      commit: commitData.commit.sha,
+    const commit = await gh('/git/commits', {
+      method: 'POST',
+      body: JSON.stringify({
+        message: files.length
+          ? `Publish articles from admin (+${files.length} photo${files.length > 1 ? 's' : ''})`
+          : 'Publish articles from admin',
+        tree: tree.sha,
+        parents: [parent.sha],
+      }),
     });
-
-  } catch (error) {
-    console.error('Error saving articles:', error);
-    return res.status(500).json({
-      error: 'Failed to save articles: ' + error.message,
+    await gh(`/git/refs/heads/${BRANCH}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ sha: commit.sha }),
     });
+    res.status(200).json({ success: true, commit: commit.sha });
+  } catch (err) {
+    console.error('Publish failed:', err);
+    res.status(500).json({ error: err.message });
   }
 }

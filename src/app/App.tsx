@@ -1,95 +1,71 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Header } from '@/app/components/Header';
-import { HomePage } from '@/app/pages/HomePage';
-import { ArticleDetailPage } from '@/app/pages/ArticleDetailPage';
-import { fetchArticles } from '@/lib/api';
-import { mapOldToNew } from '@/app/lib/bridge';
-import { NewArticle } from '@/app/data/newsData';
-import logo from '@/assets/1B64D690-775F-4269-8428-369C6A0FF8AD.png';
+import { useEffect } from 'react';
+import { BrowserRouter, Link, Route, Routes, useLocation } from 'react-router-dom';
+import { CATEGORIES } from './data';
+import { SiteProvider, useSite } from './state';
+import { Header } from './components/Header';
+import { ArticlePage, HomePage, NotFoundPage, SectionPage } from './pages';
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
+function Footer() {
+  const { lang, ui } = useSite();
+  return (
+    <footer className="relative overflow-hidden border-t border-gold/15 bg-[radial-gradient(80%_120%_at_50%_0%,#0e1a33_0%,#060912_70%)]">
+      <div className="mx-auto flex max-w-[1240px] flex-col items-center px-4 py-16 text-center sm:px-6">
+        <Link to="/" aria-label="Dayan Melmiit — home" className="group">
+          <img
+            src="/brand/logo-700.webp"
+            alt="Dayan Melmiit"
+            loading="lazy"
+            className="w-48 transition-[filter,transform] duration-700 group-hover:scale-[1.03] group-hover:[filter:drop-shadow(0_0_24px_rgba(236,210,143,0.45))]"
+          />
+        </Link>
+        <p className="mt-4 font-display text-xl italic text-parchment/75">{ui.tagline}</p>
+        <nav aria-label="Sections" className="mt-8">
+          <ul className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-[15px]">
+            {CATEGORIES.map((c) => (
+              <li key={c.slug}>
+                <Link to={`/section/${c.slug}`} className="text-parchment/65 hover:text-gold-bright">
+                  {c[lang]}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <p className="mt-10 text-sm text-mist/70">© {new Date().getFullYear()} Dayan Melmiit</p>
+      </div>
+    </footer>
+  );
+}
 
 export default function App() {
-  const [language, setLanguage] = useState<'en' | 'mn'>('en');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [articles, setArticles] = useState<NewArticle[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchArticles()
-      .then(fetched => {
-        setArticles(fetched.map(mapOldToNew));
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white/50 tracking-widest animate-pulse font-serif italic text-2xl">
-          Melmiit...
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-black">
-        <Header 
-          language={language} 
-          onLanguageChange={setLanguage}
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-        />
-        
-        <main className="max-w-[1280px] mx-auto px-6 py-12">
+    <SiteProvider>
+      <BrowserRouter>
+        <ScrollToTop />
+        <a
+          href="#main"
+          className="sr-only z-50 rounded bg-gold-bright px-4 py-2 text-night focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+        >
+          Skip to content
+        </a>
+        <Header />
+        <main id="main" className="min-h-screen">
           <Routes>
-            <Route 
-              path="/" 
-              element={
-                <HomePage 
-                  language={language} 
-                  selectedCategory={selectedCategory}
-                  articles={articles}
-                />
-              } 
-            />
-            <Route 
-              path="/article/:id" 
-              element={<ArticleDetailPage language={language} articles={articles} />} 
-            />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/section/:slug" element={<SectionPage />} />
+            <Route path="/article/:id" element={<ArticlePage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </main>
-
-        {/* Footer */}
-        <footer className="border-t border-white/10 bg-black mt-24">
-          <div className="max-w-[1280px] mx-auto px-6 py-12">
-            <div className="text-center space-y-4">
-              <img src={logo} alt="Dayan Melmiit" className="h-20 mx-auto mb-2 opacity-80 object-contain" />
-              <p className="text-white/60 text-sm tracking-wide">
-                {language === 'en' 
-                  ? 'International Journalism | Established 2026' 
-                  : 'Олон улсын сэтгүүл зүй | Байгуулагдсан 2026'}
-              </p>
-              <div className="flex items-center justify-center gap-8 text-white/50 text-sm pt-6">
-                <button className="hover:text-white transition-colors">
-                  {language === 'en' ? 'About' : 'Бидний тухай'}
-                </button>
-                <button className="hover:text-white transition-colors">
-                  {language === 'en' ? 'Contact' : 'Холбоо барих'}
-                </button>
-                <button className="hover:text-white transition-colors">
-                  {language === 'en' ? 'Privacy' : 'Нууцлал'}
-                </button>
-                <button className="hover:text-white transition-colors">
-                  {language === 'en' ? 'Terms' : 'Нөхцөл'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </footer>
-      </div>
-    </BrowserRouter>
+        <Footer />
+      </BrowserRouter>
+    </SiteProvider>
   );
 }

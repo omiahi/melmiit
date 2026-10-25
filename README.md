@@ -1,11 +1,28 @@
+# Dayan Melmiit
 
-  # melmiit
+Bilingual (English / Mongolian) news site for melmiit.com. React + Vite, hosted on Vercel.
 
-  This is a code bundle for melmiit. The original project is available at https://www.figma.com/design/yckJxxzqo8VKheIzKdmBy0/melmiit.
+- **Writing and publishing stories:** see [PUBLISHING.md](./PUBLISHING.md). Editors use melmiit.com/admin; no code needed.
+- **Stories live in** `public/articles.json`. Photos uploaded from the admin go to `public/uploads/`.
 
-  ## Running the code
+## Run it locally
 
-  Run `npm i` to install the dependencies.
+```bash
+npm install
+npm run dev        # http://localhost:3000
+npm run build      # production build in dist/
+```
 
-  Run `npm run dev` to start the development server.
-  
+The admin panel's API (`api/`) runs on Vercel. To try it locally, use `vercel dev` with the variables from `.env.example`.
+
+## Where things are
+
+| Path | What it is |
+| --- | --- |
+| `src/app/components/Hero.tsx` | The interactive emblem on the front page |
+| `src/app/components/Starfield.tsx` | Night-sky background and sparks |
+| `src/app/pages.tsx` | Front page, section pages, story page, 404 |
+| `src/app/data.ts` | Story type, sections, and all interface text in both languages |
+| `src/admin/Admin.tsx` | The newsroom editor at /admin |
+| `api/` | Sign-in, photo upload, and publish (commits to GitHub) |
+| `public/brand/` | Logo files, favicon and share image |

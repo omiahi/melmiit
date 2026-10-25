@@ -1,7 +1,6 @@
-import React from "react";
-import { createRoot } from "react-dom/client";
-import Admin from "./backup_old_ui/Admin";
-import "./admin.css";
+import { createRoot } from 'react-dom/client';
+import Admin from './admin/Admin';
+import './fonts';
+import './styles.css';
 
-const root = document.getElementById("root")!;
-createRoot(root).render(<Admin />);
+createRoot(document.getElementById('root')!).render(<Admin />);
