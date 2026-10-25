@@ -44,11 +44,29 @@ function useWide() {
   return wide;
 }
 
+/** A small gold ger: every Örtöö relay station was one. */
+export function GerIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 40 30" aria-hidden className={className}>
+      <path
+        d="M4 28 L4.4 16.6 L2.6 17.1 Q12 7.4 16.8 5 L23.2 5 Q28 7.4 37.4 17.1 L35.6 16.6 L36 28 Z"
+        fill="#070605"
+        stroke="#d9bf86"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+      <rect x="16.2" y="2.8" width="7.6" height="1.6" rx="0.4" fill="#d9bf86" />
+      <path d="M4.6 21 Q20 22.4 35.4 21" fill="none" stroke="#d9bf86" strokeWidth="0.8" opacity="0.6" />
+      <rect x="17.4" y="19" width="5.2" height="9" fill="#ecc583" />
+    </svg>
+  );
+}
+
 function StationDot({ n }: { n: number }) {
   const { ui } = useSite();
   return (
     <span className="flex items-center gap-2 whitespace-nowrap">
-      <span className="h-2.5 w-2.5 rotate-45 border border-gold-bright bg-night" />
+      <GerIcon className="w-7 -translate-y-[38%]" />
       <span className="font-display text-sm italic text-gold">{ui.station(ROMAN[n] || String(n + 1))}</span>
     </span>
   );
@@ -221,7 +239,7 @@ function RelayColumn({ lead, stations }: { lead: Article; stations: Article[] })
       <ol className="relative mt-12 border-l border-gold/30 pl-7">
         {all.map((a, i) => (
           <li key={a.id} className="relative pb-14 last:pb-4">
-            <span aria-hidden className="absolute -left-[33px] top-1 h-2.5 w-2.5 rotate-45 border border-gold-bright bg-night" />
+            <GerIcon className="absolute -left-[42px] -top-1 w-7" />
             <p className="font-display text-sm italic text-gold">{ui.station(ROMAN[i] || String(i + 1))}</p>
             <Link to={`/article/${a.id}`} className="story group mt-3 block">
               <Photo src={a.image} alt="" eager={i === 0} className={i === 0 ? 'aspect-[4/3]' : 'aspect-[16/9]'} />

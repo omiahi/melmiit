@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { drawGallop, loadGallop } from './gallop';
+import { drawGer } from './ger';
 import { usePrefersReducedMotion } from '../state';
 
 interface Rider {
@@ -88,6 +89,24 @@ export function Herd({ className, compact = false }: { className?: string; compa
     pctx.fillStyle = pg;
     pctx.fillRect(0, 0, 64, 64);
 
+    // pale stove smoke
+    const smoke = document.createElement('canvas');
+    smoke.width = smoke.height = 64;
+    const sctx = smoke.getContext('2d')!;
+    const sg = sctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+    sg.addColorStop(0, 'rgba(200,190,170,0.9)');
+    sg.addColorStop(1, 'rgba(200,190,170,0)');
+    sctx.fillStyle = sg;
+    sctx.fillRect(0, 0, 64, 64);
+
+    // an encampment on the far horizon: [position across, size, door light]
+    const CAMP: [number, number, number][] = [
+      [0.12, 0.13, 0.8],
+      [0.735, 0.17, 1],
+      [0.825, 0.13, 0.85],
+      [0.89, 0.1, 0.6],
+    ];
+
     const resize = () => {
       const r = el.getBoundingClientRect();
       w = r.width;
@@ -154,6 +173,22 @@ export function Herd({ className, compact = false }: { className?: string; compa
         line.addColorStop(1, 'rgba(184,151,90,0)');
         ctx.fillStyle = line;
         ctx.fillRect(0, horizon, w, 1);
+      }
+
+      // gers on the horizon, doors lit, smoke rising
+      if (!compact) {
+        const gy = h * 0.642;
+        for (const [fx, fs, glow] of CAMP) {
+          const flicker = 0.9 + 0.1 * Math.sin(time * 7 + fx * 40) * Math.sin(time * 3.1 + fx * 9);
+          drawGer(ctx, fx * w + px * 5, gy, h * fs * Math.min(1, Math.max(0.75, w / 1100)), {
+            fill: '#1f1810',
+            glow: glow * flicker,
+            t: time + fx * 10,
+            smoke: true,
+            puff: smoke,
+            bands: 'rgba(120,98,66,0.55)',
+          });
+        }
       }
 
       // dust behind the hooves
