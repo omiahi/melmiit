@@ -105,3 +105,75 @@ export function StoryLine({ a }: { a: Article }) {
     </Link>
   );
 }
+
+/** The lead story, full width: a darkened photograph with the headline set over it. */
+export function StoryCinema({ a }: { a: Article }) {
+  const { lang, authors } = useSite();
+  return (
+    <Link
+      to={`/article/${a.id}`}
+      className="story cinema group relative block overflow-hidden rounded-[3px] bg-dusk"
+    >
+      <Photo
+        src={a.image}
+        alt={t(a, 'title', lang)}
+        eager
+        className="aspect-[4/5] w-full sm:aspect-[16/10] lg:aspect-[2/1]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'linear-gradient(to top, rgba(7,6,5,0.96) 0%, rgba(7,6,5,0.72) 38%, rgba(7,6,5,0.15) 70%, rgba(7,6,5,0.35) 100%), linear-gradient(to right, rgba(7,6,5,0.55), transparent 60%)',
+        }}
+      />
+      <div className="absolute inset-x-0 bottom-0 p-6 sm:p-10 lg:p-14">
+        <Kicker a={a} />
+        <h2 className="mt-3 max-w-[24ch] font-display text-[clamp(2.1rem,4.2vw,4rem)] font-semibold leading-[1.02] text-parchment">
+          <span className="draw-line">{t(a, 'title', lang)}</span>
+        </h2>
+        {t(a, 'excerpt', lang) && (
+          <p className="mt-5 hidden max-w-[52ch] text-lg leading-relaxed text-parchment/80 sm:block">
+            {t(a, 'excerpt', lang)}
+          </p>
+        )}
+        <p className="mt-5 text-sm text-mist">
+          <span className="text-parchment/85">{byline(a, lang, authors)}</span>
+          <span className="mx-2 text-gold/60" aria-hidden>
+            /
+          </span>
+          <time dateTime={a.date}>{formatDate(a, lang)}</time>
+        </p>
+      </div>
+    </Link>
+  );
+}
+
+/** A story as a line in the dispatch list: date, headline and summary, small photograph. */
+export function StoryDispatch({ a }: { a: Article }) {
+  const { lang } = useSite();
+  return (
+    <Link
+      to={`/article/${a.id}`}
+      className="story group grid grid-cols-[1fr_auto] gap-x-6 gap-y-2 border-t border-gold/15 py-7 sm:grid-cols-[9rem_1fr_auto] sm:gap-x-10"
+    >
+      <time
+        dateTime={a.date}
+        className="col-span-2 font-display text-lg italic text-gold sm:col-span-1 sm:pt-1"
+      >
+        {formatDate(a, lang)}
+      </time>
+      <div className="min-w-0">
+        <Kicker a={a} className="text-[13px]" />
+        <h3 className="mt-1.5 font-display text-[clamp(1.5rem,2.4vw,2.1rem)] font-semibold leading-[1.12] text-parchment">
+          <span className="draw-line">{t(a, 'title', lang)}</span>
+        </h3>
+        {t(a, 'excerpt', lang) && (
+          <p className="mt-2 line-clamp-2 max-w-[62ch] leading-relaxed text-parchment/65">{t(a, 'excerpt', lang)}</p>
+        )}
+      </div>
+      <Photo src={a.image} alt="" className="aspect-[4/3] w-24 self-start sm:w-44" />
+    </Link>
+  );
+}

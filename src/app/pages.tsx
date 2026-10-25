@@ -20,7 +20,7 @@ import {
 } from './data';
 import { useSite } from './state';
 import { Hero } from './components/Hero';
-import { Photo, StoryCard, StoryLead, StoryLine } from './components/Stories';
+import { Photo, StoryCard, StoryCinema, StoryDispatch, StoryLead } from './components/Stories';
 import { Brief } from './components/Brief';
 
 const WorldMap = lazy(() => import('./components/WorldMap'));
@@ -82,9 +82,8 @@ export function HomePage() {
   const { articles, status, ui } = useSite();
   useTitle();
   const [lead, ...rest] = articles;
-  const pair = rest.slice(0, 2);
-  const latest = rest.slice(2, 7);
-  const more = rest.slice(7);
+  const dispatches = rest.slice(0, 5);
+  const more = rest.slice(5);
 
   return (
     <>
@@ -95,26 +94,17 @@ export function HomePage() {
         {status === 'ready' && !lead && <StatusMessage>{ui.empty}</StatusMessage>}
         {lead && (
           <>
-            <StoryLead a={lead} />
+            <StoryCinema a={lead} />
 
-            {(pair.length > 0 || latest.length > 0) && (
-              <div className="mt-20 grid gap-14 lg:grid-cols-12 lg:gap-12">
-                <div className="grid gap-12 sm:grid-cols-2 lg:col-span-8">
-                  {pair.map((a) => (
-                    <StoryCard key={a.id} a={a} large />
+            {dispatches.length > 0 && (
+              <section className="mx-auto mt-24 max-w-[1080px]" aria-labelledby="latest-heading">
+                <SectionHeading id="latest-heading">{ui.latest}</SectionHeading>
+                <div className="mt-8 border-b border-gold/15">
+                  {dispatches.map((a) => (
+                    <StoryDispatch key={a.id} a={a} />
                   ))}
                 </div>
-                {latest.length > 0 && (
-                  <aside className="lg:col-span-4" aria-labelledby="latest-heading">
-                    <SectionHeading id="latest-heading">{ui.latest}</SectionHeading>
-                    <div className="mt-2 divide-y divide-white/[0.07]">
-                      {latest.map((a) => (
-                        <StoryLine key={a.id} a={a} />
-                      ))}
-                    </div>
-                  </aside>
-                )}
-              </div>
+              </section>
             )}
 
             <div className="mt-28 border-t border-gold/15 pt-20">

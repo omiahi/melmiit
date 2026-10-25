@@ -81,10 +81,19 @@ body {
   transform: scale(1);
 }
 .frame img {
-  transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+  /* one warm, muted grade for every photo, so mixed sources sit with the black and gold */
+  filter: grayscale(0.5) sepia(0.32) saturate(0.95) brightness(0.86) contrast(1.06);
+  transition:
+    transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+    filter 0.7s ease;
 }
-.story:hover .frame img {
-  transform: scale(1.045);
+.story:hover .frame img,
+.story:focus-visible .frame img {
+  transform: scale(1.04);
+  filter: none;
+}
+.cinema .frame::after {
+  display: none;
 }
 
 /* Article body typography */
